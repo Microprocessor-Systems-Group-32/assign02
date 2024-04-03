@@ -85,6 +85,22 @@ void letter_array_create() {
     letter_array[36] = letter_create('?',"..--..");
 }
 
+struct player
+{
+    int currentRound; 
+    int highestRound;
+    int lives; 
+    int wins; 
+    int totalCorrectAnswers;
+};
+
+void playerReset(struct player * player) {
+    player->currentRound = 0;
+    player->highestRound = 0;
+    player->lives = 3;
+    player->wins = 0;
+    player->totalCorrectAnswers = 0;
+}
 
 
 
