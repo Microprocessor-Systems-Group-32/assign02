@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include "pico/stdlib.h"
+
 // Must declare the main assembly entry point before use.
 void main_asm();
 
