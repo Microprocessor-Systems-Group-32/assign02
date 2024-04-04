@@ -1,0 +1,14 @@
+# Ignore build artifacts
+*.bin
+*.dis
+*.elf
+*.hex
+*.uf2
+
+# Ignore Visual Studio files
+*.vcxproj
+*.vcxproj.filters
+
+# Ignore CMake files
+CMakeLists.txt
+cmake_install.cmake
