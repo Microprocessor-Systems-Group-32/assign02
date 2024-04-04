@@ -12,6 +12,7 @@
 @ Define constants
 
 .equ    DFLT_TIME, 0x0
+.equ    DFLT_ALARM_RUN, 0
 .equ    DFLT_ALARM_TIME, 1000000                        @ Specify the default alarm timeout
 
 .equ    LONG_PRESS, 600000
@@ -30,12 +31,24 @@
 
 @ Entry point to the ASM portion of the program
 main_asm:
+    push    {lr}
     bl      init_gpio_buttons                           @ Call subroutine to initialise GPIO buttons
     bl      install_irq_gpio                            @ Call subroutine to install GPIO interrupt handler
     bl      install_irq_0                               @ Call subroutine to install ALARM0 interrupt handler
-    bl      set_alarm_timing                            @ Call subroutine to set alarm delay
+    wfi
 main_loop:
-    b       main_loop                                   @ Infinite loop
+    bl      set_alarm_timing                            @ Call subroutine to set alarm delay
+    wfi
+    ldr     r2, =lalarmRun
+    ldr     r1, [r2]
+    cmp     r1, #1
+    bne     main_loop
+    movs    r0, #0
+    str     r0, [r2]
+    movs    r0, #3
+    movs    r1, #0
+    @ bl      add_input
+    pop     {pc}
 
 init_gpio_buttons:
     push    {r0, r1, lr}                                @ Preserve registers
@@ -103,8 +116,9 @@ irq_0_isr:
     ldr     r4, =(TIMER_BASE + TIMER_INTR_OFFSET)       @ Load address of TIMER raw interrupts register
     ldr     r5, =0x1                                    @ Load appropriate value to write TIMER0 bit
     str     r5, [r4]                                    @ Acknowledge interrupt as handled (by writing the TIMER0 bit)
-    adds    r4, r4, r4
-    @@@ TODO: Code to complete the input @@@
+    ldr     r4, =lalarmRun
+    movs    r5, #1
+    str     r5, [r4]
     bl      set_alarm_timing                            @ Enable the timer interrupt again
     pop     {r4, r5, pc}
 
@@ -146,3 +160,4 @@ gpio_isr_clear:
 .data
 ltimeDiff: .word    DFLT_TIME
 ltimer:    .word    DFLT_ALARM_TIME
+lalarmRun: .word    DFLT_ALARM_RUN

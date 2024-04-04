@@ -172,24 +172,28 @@ int main()
     // Initialise the array of letters
     letter_array_create();
 
+    // while (true)
+    // {
+    /*
+    // Set the color to red at half intensity
+    put_pixel(urgb_u32(0x7F, 0x00, 0x00));
+    sleep_ms(500);
+
+    // Set the color to green at half intensity
+    put_pixel(urgb_u32(0x00, 0x7F, 0x00));
+    sleep_ms(500);
+
+    // Set the color to blue at half intensity
+    put_pixel(urgb_u32(0x00, 0x00, 0x7F));
+    sleep_ms(500);
+    */
+
+    // Call the main assembly function
+    main_asm();
+    // }
+
     while (true)
     {
-        /*
-        // Set the color to red at half intensity
-        put_pixel(urgb_u32(0x7F, 0x00, 0x00));
-        sleep_ms(500);
-
-        // Set the color to green at half intensity
-        put_pixel(urgb_u32(0x00, 0x7F, 0x00));
-        sleep_ms(500);
-
-        // Set the color to blue at half intensity
-        put_pixel(urgb_u32(0x00, 0x00, 0x7F));
-        sleep_ms(500);
-        */
-
-        // Call the main assembly function
-        main_asm();
     }
 
     return (0);
