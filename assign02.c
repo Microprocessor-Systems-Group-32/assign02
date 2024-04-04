@@ -145,6 +145,118 @@ void playerReset(struct player * player) {
 }
 
 
+void difficultyLevels(){
+    // Characters (Levels 1 and 2)
+    if(letter == 1){
+        currentLetter = rand_array[num_count]->letter;
+        currentMorse = rand_array[num_count]->morse_name;
+        // Morse Code Provided
+        if(disp_morse == 1){
+            printf("\n\t\tYour Challenge is: %c \n\t\tand %c in Morse is %s:\n", currentLetter, currentLetter, currentMorse);
+        }
+        else{
+            printf("\n\t\tYour Challenge is: %c\n", currentLetter);
+        }
+    }
+    // Words (Levels 3 and 4)
+    else{
+        for(int i = 0; i<3; i++){
+            currentWord[i] = rand_array[num_count]->letter;
+            strcat(currentMorse2, rand_array[num_count]->morse_name);
+            if(i != 2){
+                strcat(currentMorse2, space);
+            }
+            num_count = rand() % 36;
+        }
+        current_word[3] = '\0';
+        currentMorse = currentMorse2;
+        if(disp_morse == 1){
+            printf("\n\t\tYour Challenge is: %s \n\t\tand %s in Morse, it's %s:\n", currentWord, currentWord, currentMorse);
+        }
+        else{
+            printf("\n\t\tYour Challenge is: %s\n", currentWord);
+        }
+    }
+}
+
+void inputData(){
+    if(strcmp(currentMorse,currentInput)==0){
+        printf("\n\t\tCorrect!\n");
+        rightInput++;
+        victory_count++;
+        if(lives<3){
+            lives++;
+        }
+        if(victory_count == 5){
+            printf("\n\t\tYou Win!\n");
+            if(currentLevel==4){
+                prinrf("\n\t\tCongratulations! You have completed all levels!\n");
+                winning_sequence();
+                break;
+            }
+            currentLevel = level(currentLevel+1);
+            printf("\n\n\t\t#################################################\n\n");
+            printf("\t\t\t\tAdvancing to Level %d\n\n", currentLevel);
+            printf("\n\n\t\t#################################################\n\n");
+            calculateStats(1);
+            victory_count = 0;
+        }
+    }
+    else{
+        printf("\n\t\tIncorrect!\n");
+        wrongInput++;
+        if(strcmp(hashTable[pos]->morse_name, "")==0){
+            printf("\t\tMorse Code does not exist\n");
+        }
+        else if(letter){
+            printf("\t\tMorse Code you entered is for %c\n", hashTable[pos]->letter);
+        }
+        lives--;
+        victory_count = 0;
+    }
+    num_count = rand() % 36;
+    set_correct_led();
+    currentInput[0] = '\0';
+    currentMorse2[0] = '\0';
+    if(rightInput+wrongInput){
+        calculateStats(0);
+    }
+}
+
+void set_corrrect_led(){
+    if(lives == 1) set_orange_on();
+    else if(lives == 2) set_yellow_on();
+    else set_green_on();
+    return;
+}
+
+/**
+ * @brief A function called upon in start the game function that
+ * calculates your overall accuracy throughout the game by
+ * summing your total attempts over the total correct attempts.
+*/
+
+void calculateStats(int reset){
+    printf("\n\n\t\t***************STATS***************\n\n");
+    printf("\n\t\t*Attempts: \t\t\t\t%d*", rightInput+wrongInput);
+    printf("\n\t\t*Correct: \t\t\t\t%d*", rightInput);
+    printf("\n\t\t*Incorrect: \t\t\t\t%d*", wrongInput);
+    printf("\n\t\t*Accuracy: \t\t\t\t%.2f%%*", (float)rightInput/(rightInput+wrongInput)*100);
+    printf("\n\t\t*Win Streak: \t\t\t\t%d*", victory_count);
+    printf("\n\t\t*Lives Left: \t\t\t\t%d*", lives);
+    if(rightInput!=0 || wrongInput!=0){
+        float stat = rightInput/(rightInput+wrongInput)*100;
+        if(reset){
+            rightInput = 0;
+            wrongInput = 0;
+            printf("\t\t*Correct %% for this level: \t%.2f%%*\n", stat);
+        }
+        else{
+            printf("\t\t*Correct Percent :\t\t\t%.2f%%*\n", stat);
+        }
+    }
+    printf("\n\t\t**********************************\n\n");
+}
 
 
 /**
@@ -184,14 +296,8 @@ int main()
         printf("\n       WELCOME TO OUR MORSE CODE GAME!        \n");
         printf("       USE THE GPIO PIN 20 TO CONTINUE        \n");
 
-//if statement
-if(true){
-        printf("\n        CHOOSE YOUR DIFFICULTY \n");
-        printf("        LEVEL 1: PRESS 1 TIME\n");
-        printf("        LEVEL 2: PRESS 2 TIMES\n");
-        // printf("LEVEL 3: PRESS 3 TIMES\n");
-        // printf("LEVEL 4: PRESS 4 TIMES\n");
-}
+
+
 
     while(true) {
         /*
@@ -210,6 +316,24 @@ if(true){
         
         // Call the main assembly function
         main_asm();
+        printf("\n\n\n")
+        int currentLevel;
+        if(strcmp(currentInput, ".----")==0){
+            currentLevel = level(1);
+        }
+        else if(strcmp(currentInput, "..---")==0){
+            currentLevel = level(2);
+        }
+        else if(strcmp(currentInput, "...--")==0){
+            currentLevel = level(3);
+        }
+        else if(strcmp(currentInput, "...--")==0){
+            currentLevel = level(4);
+        }
+        else{
+            printf("Invalid input.");
+            return;
+        }
     }
 
     return (0);
