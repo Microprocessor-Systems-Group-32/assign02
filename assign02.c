@@ -4,6 +4,7 @@
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
+
 // #include "ws2812.pio.h"
 
 #define IS_RGBW true  // Will use RGBW format
@@ -150,6 +151,195 @@ void playerReset(struct player *player)
     player->totalCorrectAnswers = 0;
 }
 
+void welcome(){
+    printf("__        _______ _     ____ ___  __  __ _____ \n");
+    printf("\\ \\      / / ____| |   / ___/ _ \\|  \\/  | ____| \n");
+    printf(" \\ \\ /\\ / /|  _| | |  | |  | | | | |\\/| |  _|  \n");
+    printf("  \\ V  V / | |___| |__| |__| |_| | |  | | |___  \n");
+    printf("   \\_/\\_/  |_____|_____\\____\\___/|_|  |_|_____| \n");
+    printf("  ____ ____   ___  _   _ ____    _________  \n");
+    printf(" / ___|  _ \\ / _ \\| | | |  _ \\  |___ /___ \\ \n");
+    printf("| |  _| |_) | | | | | | | |_) |   |_ \\ __) | \n");
+    printf("| |_| |  _ <| |_| | |_| |  __/   ___) / __/ \n");
+    printf(" \\____|_|\\_  \\___/ \\___/|_|     |____/_____| \n");
+
+    printf("\n       WELCOME TO OUR MORSE CODE GAME!        \n");
+    printf("       PRESS THE GPIO PIN 21 TO CONTINUE        \n");
+}
+
+void instructions(){
+    printf("\n                 HOW TO PLAY\n");
+    printf("You must enter the correct morse code sequence \n");
+    printf("There are 4 levels in total - each level is 5 rounds!\n");
+    printf("You have 3 lives before the game is over. \n");
+    printf("\n");
+    printf("1. For a dot (.), Hold down GPIO PIN 21 <0.25s \n");
+    printf("2. For a dash (-), Hold down GPIO PIN 21 for >0.25s \n");
+    printf("3. For a space, Leave the button unpressed for 1s \n");
+    printf("4. To submit, Leave the button unpressed for 2s \n");
+    printf("\n");
+    printf("\n           CHOOSE YOUR DIFFICULTY: \n");
+    printf("\n");
+    printf("            LEVEL 1: PRESS 1 TIME\n");
+    printf("            LEVEL 2: PRESS 2 TIMES\n");
+    printf("            LEVEL 3: PRESS 3 TIMES\n");
+    printf("            LEVEL 4: PRESS 4 TIMES\n");
+}
+
+void selectDifficulty(){
+    int currentLevel;
+    if(strcmp(currentInput, ".----")==0){
+        currentLevel = level(1);
+    }
+    else if(strcmp(currentInput, "..---")==0){
+        currentLevel = level(2);
+    }
+    else if(strcmp(currentInput, "...--")==0){
+        currentLevel = level(3);
+    }
+    else if(strcmp(currentInput, "...--")==0){
+        currentLevel = level(4);
+    }
+    else{
+        printf("Invalid input.");
+        return;
+    }
+}
+
+void difficultyLevelInputs(){
+    // Characters (Levels 1 and 2)
+    if(letter == 1){
+        currentLetter = rand_array[num_count]->letter;
+        currentMorse = rand_array[num_count]->morse_name;
+        // Morse Code Provided
+        if(disp_morse == 1){
+            printf("\n\t\tYour Challenge is: %c \n\t\tand %c in Morse is %s:\n", currentLetter, currentLetter, currentMorse);
+        }
+        else{
+            printf("\n\t\tYour Challenge is: %c\n", currentLetter);
+        }
+    }
+    // Words (Levels 3 and 4)
+    else{
+        for(int i = 0; i<3; i++){
+            currentWord[i] = rand_array[num_count]->letter;
+            strcat(currentMorse2, rand_array[num_count]->morse_name);
+            if(i != 2){
+                strcat(currentMorse2, space);
+            }
+            num_count = rand() % 36;
+        }
+        current_word[3] = '\0';
+        currentMorse = currentMorse2;
+        if(disp_morse == 1){
+            printf("\n\t\tYour Challenge is: %s \n\t\tand %s in Morse, it's %s:\n", currentWord, currentWord, currentMorse);
+        }
+        else{
+            printf("\n\t\tYour Challenge is: %s\n", currentWord);
+        }
+    }
+}
+
+void processInputData(){
+    if(strcmp(currentMorse,currentInput)==0){
+        printf("\n\t\tCorrect!\n");
+        rightInput++;
+        victory_count++;
+        if(lives<3){
+            lives++;
+        }
+        if(victory_count == 5){
+            printf("\n\t\tYou Win!\n");
+            if(currentLevel==4){
+                prinrf("\n\t\tCongratulations! You have completed all levels!\n");
+                winning_sequence();
+                break;
+            }
+            currentLevel = level(currentLevel+1);
+            printf("\n\n\t\t#################################################\n\n");
+            printf("\t\t\t\tAdvancing to Level %d\n\n", currentLevel);
+            printf("\n\n\t\t#################################################\n\n");
+            calculateStats(1);
+            victory_count = 0;
+        }
+    }
+    else{
+        printf("\n\t\tIncorrect!\n");
+        wrongInput++;
+        if(strcmp(hashTable[pos]->morse_name, "")==0){
+            printf("\t\tMorse Code does not exist\n");
+        }
+        else if(letter){
+            printf("\t\tMorse Code you entered is for %c\n", hashTable[pos]->letter);
+        }
+        lives--;
+        victory_count = 0;
+    }
+    num_count = rand() % 36;
+    set_correct_led();
+    currentInput[0] = '\0';
+    currentMorse2[0] = '\0';
+    if(rightInput+wrongInput){
+        calculateStats(0);
+    }
+}
+
+void set_corrrect_led(){
+    if(lives == 1) set_orange_on();
+    else if(lives == 2) set_yellow_on();
+    else set_green_on();
+    return;
+}
+
+start_game(){
+    
+}
+
+void gameFinished(){
+    calculateStats(1);
+    if(lives == 0) set_red_on();
+    printf("\n\n\n\n\n\n\t\t*****************************\n");
+    printf("\t\t*                           *\n");
+    printf("\t\t* Enter .---- to play again *\n");
+    printf("\t\t* Enter ..--- to exit       *\n");
+    printf("\t\t*****************************\n");
+    currentIndex = -1;
+    main_asm();
+    if(currentIndex == 0){
+        printf("\t\tNo update detected\n\t\tProgram will now exit.");
+    }
+    if(strcmp(currentIndex, ".----")==0){
+        start_game();
+    }
+}
+
+/**
+ * @brief A function called upon in start the game function that
+ * calculates your overall accuracy throughout the game by
+ * summing your total attempts over the total correct attempts.
+*/
+
+void calculateStats(int reset){
+    printf("\n\n\t\t***************STATS***************\n\n");
+    printf("\n\t\t*Attempts: \t\t\t\t%d*", rightInput+wrongInput);
+    printf("\n\t\t*Correct: \t\t\t\t%d*", rightInput);
+    printf("\n\t\t*Incorrect: \t\t\t\t%d*", wrongInput);
+    printf("\n\t\t*Accuracy: \t\t\t\t%.2f%%*", (float)rightInput/(rightInput+wrongInput)*100);
+    printf("\n\t\t*Win Streak: \t\t\t\t%d*", victory_count);
+    printf("\n\t\t*Lives Left: \t\t\t\t%d*", lives);
+    if(rightInput!=0 || wrongInput!=0){
+        float stat = rightInput/(rightInput+wrongInput)*100;
+        if(reset){
+            rightInput = 0;
+            wrongInput = 0;
+            printf("\t\t*Correct %% for this level: \t%.2f%%*\n", stat);
+        }
+        else{
+            printf("\t\t*Correct Percent :\t\t\t%.2f%%*\n", stat);
+        }
+    }
+    printf("\n\t\t**********************************\n\n");
+}
 /**
  * @brief EXAMPLE - WS2812_RGB
  *        Simple example to initialise the NeoPixel RGB LED on
@@ -162,7 +352,7 @@ void playerReset(struct player *player)
 int main()
 {
     // Initialise all STDIO as we will be using the GPIOs
-    stdio_init_all();
+     stdio_init_all();
 
     // Initialise the PIO interface with the WS2812 code
     // PIO pio = pio0;
@@ -172,29 +362,15 @@ int main()
     // Initialise the array of letters
     letter_array_create();
 
-    // while (true)
-    // {
-    /*
-    // Set the color to red at half intensity
-    put_pixel(urgb_u32(0x7F, 0x00, 0x00));
-    sleep_ms(500);
-
-    // Set the color to green at half intensity
-    put_pixel(urgb_u32(0x00, 0x7F, 0x00));
-    sleep_ms(500);
-
-    // Set the color to blue at half intensity
-    put_pixel(urgb_u32(0x00, 0x00, 0x7F));
-    sleep_ms(500);
-    */
-
-    // Call the main assembly function
+    welcome();
+    instructions();
     main_asm();
-    // }
+    printf("\n\n\n")
+    selectDifficulty();
 
-    while (true)
-    {
-    }
+    difficultyLevelInputs();
+    processInputData();
 
+    
     return (0);
 }
