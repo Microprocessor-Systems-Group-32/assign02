@@ -1,3 +1,11 @@
+#include <stdio.h>
+// #include <stdbool.h>
+#include "pico/stdlib.h"
+// #include "pico/float.h"
+// #include "pico/double.h"
+//#include "pico/multicore.h"
+// #include "hardware/structs/xip_ctrl.h"
+
 // Must declare the main assembly entry point before use.
 void main_asm();
 
@@ -85,21 +93,39 @@ void letter_array_create() {
     letter_array[36] = letter_create('?',"..--..");
 }
 
-
-
-
-
 /*
  * Main entry point for the code - simply calls the main assembly function.
  */
 int main()
 {
     // Initialise all STDIO as we will be using the GPIOs
-    stdio_init_all();
+     stdio_init_all();
 
     // Initialise the array of letters
     letter_array_create();
 
+        printf("__        _______ _     ____ ___  __  __ _____ \n");
+        printf("\\ \\      / / ____| |   / ___/ _ \\|  \\/  | ____| \n");
+        printf(" \\ \\ /\\ / /|  _| | |  | |  | | | | |\\/| |  _|  \n");
+        printf("  \\ V  V / | |___| |__| |__| |_| | |  | | |___  \n");
+        printf("   \\_/\\_/  |_____|_____\\____\\___/|_|  |_|_____| \n");
+        printf("  ____ ____   ___  _   _ ____    _________  \n");
+        printf(" / ___|  _ \\ / _ \\| | | |  _ \\  |___ /___ \\ \n");
+        printf("| |  _| |_) | | | | | | | |_) |   |_ \\ __) | \n");
+        printf("| |_| |  _ <| |_| | |_| |  __/   ___) / __/ \n");
+        printf(" \\____|_|\\_  \\___/ \\___/|_|     |____/_____| \n");
+
+        printf("\n       WELCOME TO OUR MORSE CODE GAME!        \n");
+        printf("       USE THE GPIO PIN 20 TO CONTINUE        \n");
+
+//if statement
+if(true){
+        printf("\n        CHOOSE YOUR DIFFICULTY \n");
+        printf("        LEVEL 1: PRESS 1 TIME\n");
+        printf("        LEVEL 2: PRESS 2 TIMES\n");
+        // printf("LEVEL 3: PRESS 3 TIMES\n");
+        // printf("LEVEL 4: PRESS 4 TIMES\n");
+}
 
     while(true) {
         // Call the main assembly function
