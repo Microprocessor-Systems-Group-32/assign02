@@ -4,7 +4,7 @@
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
-#include "ws2812.pio.h"
+//#include "ws2812.pio.h"
 
 #define IS_RGBW true        // Will use RGBW format
 #define NUM_PIXELS 1        // There is 1 WS2812 device in the chain
@@ -145,8 +145,6 @@ void playerReset(struct player * player) {
 }
 
 
-
-
 /**
  * @brief EXAMPLE - WS2812_RGB
  *        Simple example to initialise the NeoPixel RGB LED on
@@ -162,9 +160,9 @@ int main()
      stdio_init_all();
 
     // Initialise the PIO interface with the WS2812 code
-    PIO pio = pio0;
-    uint offset = pio_add_program(pio, &ws2812_program);
-    ws2812_program_init(pio, 0, offset, WS2812_PIN, 800000, IS_RGBW);
+    // PIO pio = pio0;
+    // uint offset = pio_add_program(pio, &ws2812_program);
+    // ws2812_program_init(pio, 0, offset, WS2812_PIN, 800000, IS_RGBW);
 
 
     // Initialise the array of letters
@@ -182,15 +180,28 @@ int main()
         printf(" \\____|_|\\_  \\___/ \\___/|_|     |____/_____| \n");
 
         printf("\n       WELCOME TO OUR MORSE CODE GAME!        \n");
-        printf("       USE THE GPIO PIN 20 TO CONTINUE        \n");
+        printf("       PRESS THE GPIO PIN 21 TO CONTINUE        \n");
 
-//if statement
+// coontinue if pin is pressed
 if(true){
-        printf("\n        CHOOSE YOUR DIFFICULTY \n");
-        printf("        LEVEL 1: PRESS 1 TIME\n");
-        printf("        LEVEL 2: PRESS 2 TIMES\n");
-        // printf("LEVEL 3: PRESS 3 TIMES\n");
-        // printf("LEVEL 4: PRESS 4 TIMES\n");
+        printf("\n                 HOW TO PLAY\n");
+        printf("You must enter the correct morse code sequence \n");
+        printf("There are 4 levels in total - each level is 5 rounds!\n");
+        printf("You have 3 lives before the game is over. \n");
+        printf("\n");
+        printf("1. For a dot (.), Hold down GPIO PIN 21 <0.25s \n");
+        printf("2. For a dash (-), Hold down GPIO PIN 21 for >0.25s \n");
+        printf("3. For a space, Leave the button unpressed for 1s \n");
+        printf("4. To submit, Leave the button unpressed for 2s \n");
+        printf("\n");
+        printf("\n           CHOOSE YOUR DIFFICULTY: \n");
+        printf("\n");
+        printf("            LEVEL 1: PRESS 1 TIME\n");
+        printf("            LEVEL 2: PRESS 2 TIMES\n");
+        printf("            LEVEL 3: PRESS 3 TIMES\n");
+        printf("            LEVEL 4: PRESS 4 TIMES\n");
+
+        
 }
 
     while(true) {
