@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
-#include "ws2812.pio.h"
+//#include "ws2812.pio.h"
 
 #define IS_RGBW true        // Will use RGBW format
 #define NUM_PIXELS 1        // There is 1 WS2812 device in the chain
@@ -144,9 +143,6 @@ void playerReset(struct player * player) {
     player->totalCorrectAnswers = 0;
 }
 
-
-
-
 /**
  * @brief EXAMPLE - WS2812_RGB
  *        Simple example to initialise the NeoPixel RGB LED on
@@ -162,14 +158,17 @@ int main()
      stdio_init_all();
 
     // Initialise the PIO interface with the WS2812 code
-    PIO pio = pio0;
-    uint offset = pio_add_program(pio, &ws2812_program);
-    ws2812_program_init(pio, 0, offset, WS2812_PIN, 800000, IS_RGBW);
+    // PIO pio = pio0;
+    // uint offset = pio_add_program(pio, &ws2812_program);
+    // ws2812_program_init(pio, 0, offset, WS2812_PIN, 800000, IS_RGBW);
 
+    //Initialise Player
+    struct player player;
+    playerReset(&player);
 
     // Initialise the array of letters
     letter_array_create();
-
+    //print welcome message
         printf("__        _______ _     ____ ___  __  __ _____ \n");
         printf("\\ \\      / / ____| |   / ___/ _ \\|  \\/  | ____| \n");
         printf(" \\ \\ /\\ / /|  _| | |  | |  | | | | |\\/| |  _|  \n");
@@ -184,14 +183,42 @@ int main()
         printf("\n       WELCOME TO OUR MORSE CODE GAME!        \n");
         printf("       USE THE GPIO PIN 20 TO CONTINUE        \n");
 
-//if statement
-if(true){
+bool temp =true;
+//if button is pressed
+    if(temp){
         printf("\n        CHOOSE YOUR DIFFICULTY \n");
         printf("        LEVEL 1: PRESS 1 TIME\n");
         printf("        LEVEL 2: PRESS 2 TIMES\n");
-        // printf("LEVEL 3: PRESS 3 TIMES\n");
-        // printf("LEVEL 4: PRESS 4 TIMES\n");
+        printf("        LEVEL 3: PRESS 3 TIMES\n");
+        printf("        LEVEL 4: PRESS 4 TIMES\n");
+        player.currentRound++;
 }
+
+// each level has 5 rounds
+if(player.currentRound == 1){ // player.currentRound = "levels"
+    double round = 0;
+    bool correct = false;
+    printf("\nPRINT THE FOLLOWING IN MORSE CODE \n");
+    printf("B = [-...] \n");
+
+//print player input + letter equivalent
+// create function to print letter
+
+// If it does not decode to an alphanumeric character, then “?” should be shown instead.
+
+
+
+    if(correct){ // NEXT ROUND - ROUND 1
+        printf("CORRECT! +20XP \n");
+        printf("80XP AWAY FROM LEVEL 2 \n");
+        printf("\nPRINT THE FOLLOWING IN MORSE CODE \n");
+        printf("P = [.--.] \n");
+    } else {
+        printf("INCORRECT! -1 LIFE");
+    }
+
+    }
+
 
     while(true) {
         /*

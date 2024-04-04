@@ -5,7 +5,7 @@ add_executable(assign02)
 target_sources(assign02 PRIVATE assign02.c assign02.S)
 
 # Pull in commonly used features.
-target_link_libraries(assign02 PRIVATE pico_stdlib)
+target_link_libraries(assign02 PRIVATE pico_stdlib hardware_pio pico_multicore)
 
 # Create map/bin/hex file etc.
 pico_add_extra_outputs(assign02)
