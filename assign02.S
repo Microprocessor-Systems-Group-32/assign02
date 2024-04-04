@@ -70,24 +70,27 @@ gpio_isr:
     push    {lr}
     add     r3, r3, r4
     ldr     r4, =(IO_BANK0_BASE + IO_BANK0_INTR2_OFFSET) @ Load INTR2 register address
-    ldr     r5, =GPIO_BTN_MSK_FALL                      @ Load value to write to GPIO 21 bit 
+    ldr     r5, =GPIO_BTN_MSK_FALL                       @ Load value to write to GPIO 21 bit 
     ldr     r6, [r4]
     ands    r6, r5, r6
     lsrs    r6, #22
     cmp     r6, #1
     bne     rise_edge
     @ It's a falling-edge event, just store the current time
-    @ bl      time_us_32
-    ldr     r6, =(TIMER_BASE + TIMER_TIMELR_OFFSET)
-    ldr     r6, [r6]
-    ldr     r7, =ltime
-    str     r6, [r7]
-    ldr     r5, =GPIO_BTN_MSK_FALL_CLEAR
+    ldr     r7, =GPIO_BTN_MSK_FALL_CLEAR                @ Load value to write to GPIO 21 bit 
     b       gpio_isr_clear
 rise_edge:
-    ldr     r5, =GPIO_BTN_MSK_RISE_CLEAR                @ Load value to write to GPIO 21 bit 
+    ldr     r7, =GPIO_BTN_MSK_RISE_CLEAR                @ Load value to write to GPIO 21 bit 
 gpio_isr_clear:
-    str     r5, [r4]                                    @ Clear pending GPIO 21 request
+    ldr     r4, =ltime                                  @ Load the address of the timer var
+    ldr     r4, [r4]                                    @ Load the timer var
+    ldr     r5, =(TIMER_BASE + TIMER_TIMELR_OFFSET)     @ Load the address of the timer (lwr 32 bits) register
+    ldr     r5, [r5]                                    @ Load the lwr 32 bits of the time
+    ldr     r6, =ltime                                  @ Load the address of the timer var
+    str     r5, [r6]                                    @ Store the current time in the var
+    subs    r0, r5, r4                                  @ diff = currClickTime - lastClickTime
+    ldr     r4, =(IO_BANK0_BASE + IO_BANK0_INTR2_OFFSET) @ Load INTR2 register address
+    str     r7, [r4]                                    @ Clear pending GPIO 21 request
     pop     {pc}
 
 @ Set data alignment
