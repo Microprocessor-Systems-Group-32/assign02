@@ -11,19 +11,25 @@
 
 @ Define constants
 
-.equ    GPIO_BTN_EN_MSK, 0x00400000                     @ Bit-22 for falling-edge event on GP21
+.equ    DFLT_TIME, 0x0
+
+.equ    GPIO_BTN_MSK_RISE_CLEAR, 0x00800000             @ Bit-23 for rising-edge event on GP21
+.equ    GPIO_BTN_MSK_FALL_CLEAR, 0x00400000             @ Bit-22 for falling-edge event on GP21
+.equ    GPIO_BTN_MSK_RISE, 0x00800000                   @ Bit-21 for falling-edge event on GP21
+.equ    GPIO_BTN_MSK_FALL, 0x00400000                   @ Bit-20 for rising-edge event on GP21
 
 .equ    GPIO_BTN_PIN,   21                              @ Specify pin for GPIO button 21
 .equ    GPIO_DIR_IN,    0                               @ Specify input direction for a GPIO pin
 .equ    GPIO_DIR_OUT,   1                               @ Specify output direction for a GPIO pin
 
-.equ    ALRM_ISR_OFFSET, 0x40                           @ ALARM0 is int #0 (vector table entry 16)
+.equ    GPIO_ISR_OFFSET, 0x74                           @ GPIO is int #13 (vector table entry 29)
 
 @ Entry point to the ASM portion of the program
 main_asm:
     bl      init_gpio_buttons                           @ Call subroutine to initialise GPIO buttons
     bl      install_irq_gpio                            @ Call subroutine to install GPIO interrupt handler
-    b       main_asm                                    @ Infinite loop
+main_loop:
+    b       main_loop                                   @ Infinite loop
 
 init_gpio_buttons:
     push    {r0, r1, lr}                                @ Preserve registers
@@ -62,9 +68,26 @@ enable_interrupt:
 .thumb_func
 gpio_isr:
     push    {lr}
-    @ Code here
+    add     r3, r3, r4
+    ldr     r4, =(IO_BANK0_BASE + IO_BANK0_INTR2_OFFSET) @ Load INTR2 register address
+    ldr     r5, =GPIO_BTN_MSK_FALL                      @ Load value to write to GPIO 21 bit 
+    ldr     r6, [r4]
+    ands    r6, r5, r6
+    lsrs    r6, #22
+    cmp     r6, #1
+    bne     rise_edge
+    @ It's a falling-edge event, just store the current time
+    bl      time_us_32
+    ldr     r5, =GPIO_BTN_MSK_FALL_CLEAR
+    b       gpio_isr_clear
+rise_edge:
+    ldr     r5, =GPIO_BTN_MSK_RISE_CLEAR                @ Load value to write to GPIO 21 bit 
+gpio_isr_clear:
+    str     r5, [r4]                                    @ Clear pending GPIO 21 request
     pop     {pc}
 
 @ Set data alignment
+.align 4
+
 .data
-    .align 4
+ltime: .word    DFLT_TIME

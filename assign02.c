@@ -32,6 +32,7 @@ void asm_gpio_put(uint pin, bool value)
 void asm_gpio_set_irq(uint pin)
 {
     gpio_set_irq_enabled(pin, GPIO_IRQ_EDGE_FALL, true);
+    gpio_set_irq_enabled(pin, GPIO_IRQ_EDGE_RISE, true);
 }
 
 struct letter
