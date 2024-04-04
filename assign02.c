@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
@@ -143,6 +144,7 @@ void playerReset(struct player * player) {
     player->totalCorrectAnswers = 0;
 }
 
+
 /**
  * @brief EXAMPLE - WS2812_RGB
  *        Simple example to initialise the NeoPixel RGB LED on
@@ -162,13 +164,10 @@ int main()
     // uint offset = pio_add_program(pio, &ws2812_program);
     // ws2812_program_init(pio, 0, offset, WS2812_PIN, 800000, IS_RGBW);
 
-    //Initialise Player
-    struct player player;
-    playerReset(&player);
 
     // Initialise the array of letters
     letter_array_create();
-    //print welcome message
+
         printf("__        _______ _     ____ ___  __  __ _____ \n");
         printf("\\ \\      / / ____| |   / ___/ _ \\|  \\/  | ____| \n");
         printf(" \\ \\ /\\ / /|  _| | |  | |  | | | | |\\/| |  _|  \n");
@@ -181,44 +180,29 @@ int main()
         printf(" \\____|_|\\_  \\___/ \\___/|_|     |____/_____| \n");
 
         printf("\n       WELCOME TO OUR MORSE CODE GAME!        \n");
-        printf("       USE THE GPIO PIN 20 TO CONTINUE        \n");
+        printf("       PRESS THE GPIO PIN 21 TO CONTINUE        \n");
 
-bool temp =true;
-//if button is pressed
-    if(temp){
-        printf("\n        CHOOSE YOUR DIFFICULTY \n");
-        printf("        LEVEL 1: PRESS 1 TIME\n");
-        printf("        LEVEL 2: PRESS 2 TIMES\n");
-        printf("        LEVEL 3: PRESS 3 TIMES\n");
-        printf("        LEVEL 4: PRESS 4 TIMES\n");
-        player.currentRound++;
+// coontinue if pin is pressed
+if(true){
+        printf("\n                 HOW TO PLAY\n");
+        printf("You must enter the correct morse code sequence \n");
+        printf("There are 4 levels in total - each level is 5 rounds!\n");
+        printf("You have 3 lives before the game is over. \n");
+        printf("\n");
+        printf("1. For a dot (.), Hold down GPIO PIN 21 <0.25s \n");
+        printf("2. For a dash (-), Hold down GPIO PIN 21 for >0.25s \n");
+        printf("3. For a space, Leave the button unpressed for 1s \n");
+        printf("4. To submit, Leave the button unpressed for 2s \n");
+        printf("\n");
+        printf("\n           CHOOSE YOUR DIFFICULTY: \n");
+        printf("\n");
+        printf("            LEVEL 1: PRESS 1 TIME\n");
+        printf("            LEVEL 2: PRESS 2 TIMES\n");
+        printf("            LEVEL 3: PRESS 3 TIMES\n");
+        printf("            LEVEL 4: PRESS 4 TIMES\n");
+
+        
 }
-
-// each level has 5 rounds
-if(player.currentRound == 1){ // player.currentRound = "levels"
-    double round = 0;
-    bool correct = false;
-    printf("\nPRINT THE FOLLOWING IN MORSE CODE \n");
-    printf("B = [-...] \n");
-
-//print player input + letter equivalent
-// create function to print letter
-
-// If it does not decode to an alphanumeric character, then “?” should be shown instead.
-
-
-
-    if(correct){ // NEXT ROUND - ROUND 1
-        printf("CORRECT! +20XP \n");
-        printf("80XP AWAY FROM LEVEL 2 \n");
-        printf("\nPRINT THE FOLLOWING IN MORSE CODE \n");
-        printf("P = [.--.] \n");
-    } else {
-        printf("INCORRECT! -1 LIFE");
-    }
-
-    }
-
 
     while(true) {
         /*
