@@ -77,7 +77,7 @@ gpio_isr:
     cmp     r6, #1
     bne     rise_edge
     @ It's a falling-edge event, just store the current time
-    ldr     r7, =GPIO_BTN_MSK_FALL_CLEAR                @ Load value to write to GPIO 21 bit 
+    ldr     r7, =GPIO_BTN_MSK_FALL_CLEAR                @ Load value to write to GPIO 21 bit
     b       gpio_isr_clear
 rise_edge:
     ldr     r7, =GPIO_BTN_MSK_RISE_CLEAR                @ Load value to write to GPIO 21 bit 
