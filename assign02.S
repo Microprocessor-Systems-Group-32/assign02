@@ -77,7 +77,11 @@ gpio_isr:
     cmp     r6, #1
     bne     rise_edge
     @ It's a falling-edge event, just store the current time
-    bl      time_us_32
+    @ bl      time_us_32
+    ldr     r6, =(TIMER_BASE + TIMER_TIMELR_OFFSET)
+    ldr     r6, [r6]
+    ldr     r7, =ltime
+    str     r6, [r7]
     ldr     r5, =GPIO_BTN_MSK_FALL_CLEAR
     b       gpio_isr_clear
 rise_edge:
