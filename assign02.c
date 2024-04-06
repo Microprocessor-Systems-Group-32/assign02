@@ -181,7 +181,7 @@ void selectDifficulty(){
     struct letter null = letter_create(' ', " ");
     while(true){
         input = "";
-        playerInput(player, null);
+        playerInput();
         if(strcmp(currentInput, ".----")==0){
             currentLevel = 1;
             return;
@@ -287,7 +287,7 @@ void processInputData(){
     }
 }
 
-void set_corrrect_led(struct player* player){
+void set_corrrect_led(){
     if(currentRound != 0){
         switch(numberOfLives){
             case 3:
@@ -313,12 +313,12 @@ void set_corrrect_led(struct player* player){
 }
 
 
-start_game(struct player* player){
+start_game(){
     int correctAnswerStreak = 0;
     printf("\nLevel %d\n", currentRound);
     bool isCorrect;
     //update the colour of the LED based on the player's lives
-    set_corrrect_led(player);
+    set_corrrect_led();
     while(correctAnswerStreak != 5 && numberOfLives != 0){
         //Reset input
         input = "";
@@ -337,7 +337,7 @@ start_game(struct player* player){
                 l = letter_array[index];
                 //print a line of text giving the player their letter AND the morse code variant (see the letter struct for reference)
                 printf("\nType the morse code for the letter\n'%c' -> \"%s\"\n", l.letter, l.morse_code);
-                playerInput(player, l);
+                playerInput(l);
                 if(strcmp(input, l.morse_code) == 0)
                     isCorrect = true; 
                 break;
@@ -345,7 +345,7 @@ start_game(struct player* player){
                 l = letter_array[index];
                 //print a line of text giving the player their letter AND the morse code variant (see the letter struct for reference)
                 printf("\nType the morse code for the letter\n'%c'\n", l.letter);
-                playerInput(player, l);
+                playerInput(l);
                 if(strcmp(input, l.morse_code) == 0)
                     isCorrect = true; 
                 break;
@@ -377,14 +377,14 @@ start_game(struct player* player){
 
         printf("\nCurrent Streak: %d\n", correctAnswerStreak);
         //update the colour of the LED based on the player's lives
-        updateLED(player);
+        updateLED();
         watchdog_update();
     }
     if(numberOfLives == 0 || currentRound == 2)
-        gameFinished(player);
+        gameFinished();
 }
 
-void gameFinished(struct player* player){
+void gameFinished(){
     calculateStats(1);
     if(lives == 0) set_red_on();
     printf("\n\n\n\n\n\n\t\t*****************************\n");
@@ -398,7 +398,7 @@ void gameFinished(struct player* player){
         printf("\t\tNo update detected\n\t\tProgram will now exit.");
     }
     if(strcmp(currentIndex, ".----")==0){
-        start_game(struct player* player);
+        start_game();
     }
 }
 
@@ -408,7 +408,7 @@ void gameFinished(struct player* player){
  * summing your total attempts over the total correct attempts.
 */
 
-void calculateStats(, int reset){
+void calculateStats(int reset){
     printf("\n\n\t\t***************STATS***************\n\n");
     printf("\n\t\t*Attempts: \t\t\t\t%d*", rightInput+wrongInput);
     printf("\n\t\t*Correct: \t\t\t\t%d*", rightInput);
