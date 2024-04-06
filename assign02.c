@@ -141,6 +141,12 @@ int wins = 0;
 int totalCorrectAnswers = 0;
 int rightInput = 0;
 int wrongInput = 0;
+char currentLetter;
+char[] currentWord;
+char[] currentMorse;
+char[] currentMorse2;
+char[] currentInput;
+
 
 void welcome(){
     printf("__        _______ _     ____ ___  __  __ _____ \n");
@@ -235,7 +241,7 @@ void difficultyLevelInputs(){
         current_word[3] = '\0';
         currentMorse = currentMorse2;
         if(disp_morse == 1){
-            printf("\n\t\tYour Challenge is: %s \n\t\tand %s in Morse, it's %s:\n", currentWord, currentWord, currentMorse);
+            printf("\n\t\tYour Challenge is: %s \n\t\tMorse equivalent: %s\n", currentWord, currentWord, currentMorse);
         }
         else{
             printf("\n\t\tYour Challenge is: %s\n", currentWord);
@@ -276,7 +282,7 @@ void processInputData(){
             printf("\t\tMorse Code you entered is for %c\n", hashTable[pos]->letter);
         }
         lives--;
-        victory_count = 0;
+        wins = 0;
     }
     num_count = rand() % 36;
     set_correct_led();
@@ -288,8 +294,8 @@ void processInputData(){
 }
 
 void set_corrrect_led(){
-    if(currentRound != 0){
-        switch(numberOfLives){
+    if(currentLevel != 0){
+        switch(lives){
             case 3:
                 // Set Green
                 put_pixel(urgb_u32(0x0,0x3F,0x0));
@@ -315,16 +321,16 @@ void set_corrrect_led(){
 
 start_game(){
     int correctAnswerStreak = 0;
-    printf("\nLevel %d\n", currentRound);
+    printf("\nLevel %d\n", currentLevel);
     bool isCorrect;
     //update the colour of the LED based on the player's lives
     set_corrrect_led();
-    while(correctAnswerStreak != 5 && numberOfLives != 0){
+    while(correctAnswerStreak != 5 && lives != 0){
         //Reset input
         input = "";
         flag = 0;
-        //If correct, correctAnswers and numberOfLives +1 (up to 3 lives)
-        //If incorrect, numberOfLives--
+        //If correct, correctAnswers and lives +1 (up to 3 lives)
+        //If incorrect, lives--
 
         isCorrect = false;
         //produce a random letter from our letter_array (0 to 37)
@@ -332,7 +338,7 @@ start_game(){
         srand(seed);
         int index = rand() % 36;
 
-        switch(currentRound){
+        switch(currentLevel){
             case 1:
                 l = letter_array[index];
                 //print a line of text giving the player their letter AND the morse code variant (see the letter struct for reference)
@@ -363,8 +369,8 @@ start_game(){
         
         if(isCorrect) {
             printf("\nCorrect! \"%s\" is the morse code for '%c'\n", input, l.letter);
-            if(numberOfLives != 3)
-                numberOfLives++;
+            if(lives != 3)
+                lives++;
             correctAnswerStreak++;
             totalCorrectAnswers++;
         }
@@ -372,7 +378,7 @@ start_game(){
         else {
             printf("\nOh no, that's not right. The morse code for '%c' is \"%s\". Try Again!\n", l.letter, l.morse_code);
             correctAnswerStreak = 0;
-            numberOfLives--;
+            lives--;
         }
 
         printf("\nCurrent Streak: %d\n", correctAnswerStreak);
@@ -380,7 +386,7 @@ start_game(){
         updateLED();
         watchdog_update();
     }
-    if(numberOfLives == 0 || currentRound == 2)
+    if(lives == 0 || currentLevel == 2)
         gameFinished();
 }
 
