@@ -1,15 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
-
-// #include "ws2812.pio.h"
+#include "ws2812.pio.h"
 
 #define IS_RGBW true  // Will use RGBW format
 #define NUM_PIXELS 1  // There is 1 WS2812 device in the chain
 #define WS2812_PIN 28 // The GPIO pin that the WS2812 connected to
+
+
+// -------------------------------------- WS2812 RGB LED --------------------------------------
 
 /**
  * @brief Wrapper function used to call the underlying PIO
@@ -42,8 +45,12 @@ static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b)
            (uint32_t)(b);
 }
 
-// Must declare the main assembly entry point before use.
+
+// ------------------------------ Declare Main Assembly Entry Before use ------------------------------
+
 void main_asm();
+
+// -------------------------------------- GPIO Pin Initialisation --------------------------------------
 
 // Initialise GPIO pin
 void asm_gpio_init(uint pin)
@@ -76,77 +83,199 @@ void asm_gpio_set_irq(uint pin)
     gpio_set_irq_enabled(pin, GPIO_IRQ_EDGE_RISE, true);
 }
 
-struct letter
-{
-    char letter;      // char representation of letter
-    char *morse_code; // morse code representation of letter, in binary string format
-};
+// -------------------------------------- Button Timer --------------------------------------
 
-// Creates an instance of letter.
-struct letter letter_create(char letter, char *morse_code)
+// Get timestamp in milliseconds
+int get_time_in_ms()
 {
-    struct letter output;
-    output.letter = letter;
-    output.morse_code = morse_code;
-    return output;
+    absolute_time_t time = get_absolute_time();
+    return to_ms_since_boot(time);
 }
 
-struct letter letter_array[37];
-void letter_array_create()
+// Find time difference in milliseconds
+int get_time_difference(int end, int start)
 {
-    letter_array[0] = letter_create('A', ".-");
-    letter_array[1] = letter_create('B', "-...");
-    letter_array[2] = letter_create('C', "-.-.");
-    letter_array[3] = letter_create('D', "-..");
-    letter_array[4] = letter_create('E', ".");
-    letter_array[5] = letter_create('F', "..-.");
-    letter_array[6] = letter_create('G', "--.");
-    letter_array[7] = letter_create('H', "....");
-    letter_array[8] = letter_create('I', "..");
-    letter_array[9] = letter_create('J', ".---");
-    letter_array[10] = letter_create('K', "-.-");
-    letter_array[11] = letter_create('L', ".-..");
-    letter_array[12] = letter_create('M', "--");
-    letter_array[13] = letter_create('N', "-.");
-    letter_array[14] = letter_create('O', "---");
-    letter_array[15] = letter_create('P', ".--.");
-    letter_array[16] = letter_create('Q', "--.-");
-    letter_array[17] = letter_create('R', ".-.");
-    letter_array[18] = letter_create('S', "...");
-    letter_array[19] = letter_create('T', "-");
-    letter_array[20] = letter_create('U', "..-");
-    letter_array[21] = letter_create('V', "...-");
-    letter_array[22] = letter_create('W', ".--");
-    letter_array[23] = letter_create('X', "-..-");
-    letter_array[24] = letter_create('Y', "-.--");
-    letter_array[25] = letter_create('Z', "--..");
-    letter_array[26] = letter_create('0', "-----");
-    letter_array[27] = letter_create('1', ".----");
-    letter_array[28] = letter_create('2', "..---");
-    letter_array[29] = letter_create('3', "...--");
-    letter_array[30] = letter_create('4', "....-");
-    letter_array[31] = letter_create('5', ".....");
-    letter_array[32] = letter_create('6', "-....");
-    letter_array[33] = letter_create('7', "--...");
-    letter_array[34] = letter_create('8', "---..");
-    letter_array[35] = letter_create('9', "----.");
-    letter_array[36] = letter_create('?', "..--..");
+    return (end - start);
 }
 
-// Global variables
+// -------------------------------------- Global Variables --------------------------------------
+
 int currentLevel = 0;
 int highestLevel = 0;
+int selectLevel = 0;
+
 int lives = 3;
+
 int wins = 0;
 int totalCorrectAnswers = 0;
 int rightInput = 0;
 int wrongInput = 0;
-char currentLetter;
-char[] currentWord;
-char[] currentMorse;
-char[] currentMorse2;
-char[] currentInput;
+int remaining = 5;
 
+char currentInput[20];
+int i = 0; // i = length of input sequence
+int tmpIndex = 0;
+int inputComplete = 0;
+
+// -------------------------------------- Letter Struct --------------------------------------
+
+#define TABLE_SIZE 36
+
+typedef struct morse
+{
+    char letter;
+    char *code;
+} morse;
+morse table[TABLE_SIZE];
+
+void morse_init()
+{
+
+    table[0].letter = 'A';
+    table[1].letter = 'B';
+    table[2].letter = 'C';
+    table[3].letter = 'D';
+    table[4].letter = 'E';
+    table[5].letter = 'F';
+    table[6].letter = 'G';
+    table[7].letter = 'H';
+    table[8].letter = 'I';
+    table[9].letter = 'J';
+    table[10].letter = 'K';
+    table[11].letter = 'L';
+    table[12].letter = 'M';
+    table[13].letter = 'N';
+    table[14].letter = 'O';
+    table[15].letter = 'P';
+    table[16].letter = 'Q';
+    table[17].letter = 'R';
+    table[18].letter = 'S';
+    table[19].letter = 'T';
+    table[20].letter = 'U';
+    table[21].letter = 'V';
+    table[22].letter = 'W';
+    table[23].letter = 'X';
+    table[24].letter = 'Y';
+    table[25].letter = 'Z';
+    table[26].letter = '0';
+    table[27].letter = '1';
+    table[28].letter = '2';
+    table[29].letter = '3';
+    table[30].letter = '4';
+    table[31].letter = '5';
+    table[32].letter = '6';
+    table[33].letter = '7';
+    table[34].letter = '8';
+    table[35].letter = '9';
+
+    table[0].code = ".-";
+    table[1].code = "-...";
+    table[2].code = "-.-.";
+    table[3].code = "-..";
+    table[4].code = ".";
+    table[5].code = "..-.";
+    table[6].code = "--.";
+    table[7].code = "....";
+    table[8].code = "..";
+    table[9].code = ".---";
+    table[10].code = "-.-";
+    table[11].code = ".-..";
+    table[12].code = "--";
+    table[13].code = "-.";
+    table[14].code = "---";
+    table[15].code = ".--.";
+    table[16].code = "--.-";
+    table[17].code = ".-.";
+    table[18].code = "...";
+    table[19].code = "-";
+    table[20].code = "..-";
+    table[21].code = "...-";
+    table[22].code = ".--";
+    table[23].code = "-..-";
+    table[24].code = "-.--";
+    table[25].code = "--..";
+    table[26].code = "-----";
+    table[27].code = ".----";
+    table[28].code = "..---";
+    table[29].code = "...--";
+    table[30].code = "....-";
+    table[31].code = ".....";
+    table[32].code = "-....";
+    table[33].code = "--...";
+    table[34].code = "---..";
+    table[35].code = "----.";
+}
+
+
+// -------------------------------------- Start Game --------------------------------------
+void start_game()
+{
+    put_pixel(urgb_u32(0x00, 0x3F, 0x00)); // Set the RGB LED color to green
+    rightInput = 0;
+    lives = 3;
+    remaining = 5;
+    wrongInput = 0;
+}
+
+// -------------------------------------- Select Level --------------------------------------
+
+void level_select_true(){
+    selectLevel = 1;
+}
+
+
+
+void level_select_false(){
+    selectLevel = 0;
+}
+
+void selectDifficulty(){
+    while(true){
+        if(strcmp(currentInput, ".----")==0){
+            currentLevel = 1;
+            return;
+        }
+        else if(strcmp(currentInput, "..---")==0){
+            currentLevel = 2;
+            return;
+        }
+        else if(strcmp(currentInput, "...--")==0){
+            currentLevel = 3;
+            return;
+        }
+        else if(strcmp(currentInput, "...--")==0){
+            currentLevel = 4;
+            return;
+        }
+        else{
+            printf("Error: Invalid input.");
+            return;
+        }
+    }
+}
+
+int selectRandom(int low, int high)
+{
+    if (low > high)
+        return high;
+    return low + (rand() % (high - low + 1));
+}
+
+// Levels
+
+
+// -------------------------------------- Inputs --------------------------------------
+
+void playerInput(){
+    // ToDo
+}
+
+
+
+
+
+
+// -------------------------------------- Display Message --------------------------------------
 
 void welcome(){
     printf("__        _______ _     ____ ___  __  __ _____ \n");
@@ -175,123 +304,19 @@ void instructions(){
     printf("3. For a space, Leave the button unpressed for 1s \n");
     printf("4. To submit, Leave the button unpressed for 2s \n");
     printf("\n");
-    printf("\n           CHOOSE YOUR DIFFICULTY: \n");
-    printf("\n");
-    printf("            LEVEL 1: PRESS 1 TIME\n");
-    printf("            LEVEL 2: PRESS 2 TIMES\n");
-    printf("            LEVEL 3: PRESS 3 TIMES\n");
-    printf("            LEVEL 4: PRESS 4 TIMES\n");
-}
-
-void selectDifficulty(){
-    struct letter null = letter_create(' ', " ");
-    while(true){
-        input = "";
-        playerInput();
-        if(strcmp(currentInput, ".----")==0){
-            currentLevel = 1;
-            return;
-        }
-        else if(strcmp(currentInput, "..---")==0){
-            currentLevel = 2;
-            return;
-        }
-        else if(strcmp(currentInput, "...--")==0){
-            currentLevel = 3;
-            return;
-        }
-        else if(strcmp(currentInput, "...--")==0){
-            currentLevel = 4;
-            return;
-        }
-        else{
-            printf("Invalid input.");
-            return;
-        }
-    }
-}
-
-void playerInput(){
-    // ToDo
 }
 
 void difficultyLevelInputs(){
-    // Characters (Levels 1 and 2)
-    if(letter == 1){
-        currentLetter = rand_array[num_count]->letter;
-        currentMorse = rand_array[num_count]->morse_name;
-        // Morse Code Provided
-        if(disp_morse == 1){
-            printf("\n\t\tYour Challenge is: %c \n\t\tand %c in Morse is %s:\n", currentLetter, currentLetter, currentMorse);
-        }
-        else{
-            printf("\n\t\tYour Challenge is: %c\n", currentLetter);
-        }
-    }
-    // Words (Levels 3 and 4)
-    else{
-        for(int i = 0; i<3; i++){
-            currentWord[i] = rand_array[num_count]->letter;
-            strcat(currentMorse2, rand_array[num_count]->morse_name);
-            if(i != 2){
-                strcat(currentMorse2, space);
-            }
-            num_count = rand() % 36;
-        }
-        current_word[3] = '\0';
-        currentMorse = currentMorse2;
-        if(disp_morse == 1){
-            printf("\n\t\tYour Challenge is: %s \n\t\tMorse equivalent: %s\n", currentWord, currentWord, currentMorse);
-        }
-        else{
-            printf("\n\t\tYour Challenge is: %s\n", currentWord);
-        }
-    }
+    printf("\n\n\t*****************************\n");
+    printf("\t*                           *\n");
+    printf("\t* Enter .---- for Level 1   *\n");
+    printf("\t* Enter ..--- for Level 2   *\n");
+    printf("\t* Enter ...-- for Level 3   *\n");
+    printf("\t* Enter ....- for Level 4   *\n");
+    printf("\t*****************************\n");
 }
 
-void processInputData(){
-    if(strcmp(currentMorse,currentInput)==0){
-        printf("\n\t\tCorrect!\n");
-        rightInput++;
-        wins++;
-        if(lives<3){
-            lives++;
-        }
-        if(wins == 5){
-            printf("\n\t\tYou Win!\n");
-            if(currentLevel==4){
-                prinrf("\n\t\tCongratulations! You have completed all levels!\n");
-                winning_sequence();
-                break;
-            }
-            currentLevel = currentLevel + 1;
-            printf("\n\n\t\t#################################################\n\n");
-            printf("\t\t\t\tAdvancing to Level %d\n\n", currentLevel);
-            printf("\n\n\t\t#################################################\n\n");
-            calculateStats(1);
-            wins = 0;
-        }
-    }
-    else{
-        printf("\n\t\tIncorrect!\n");
-        wrongInput++;
-        if(strcmp(hashTable[pos]->morse_name, "")==0){
-            printf("\t\tMorse Code does not exist\n");
-        }
-        else if(letter){
-            printf("\t\tMorse Code you entered is for %c\n", hashTable[pos]->letter);
-        }
-        lives--;
-        wins = 0;
-    }
-    num_count = rand() % 36;
-    set_correct_led();
-    currentInput[0] = '\0';
-    currentMorse2[0] = '\0';
-    if(rightInput+wrongInput){
-        calculateStats(0);
-    }
-}
+// -------------------------------------- LED --------------------------------------
 
 void set_corrrect_led(){
     if(currentLevel != 0){
@@ -318,95 +343,12 @@ void set_corrrect_led(){
     }
 }
 
-
-start_game(){
-    int correctAnswerStreak = 0;
-    printf("\nLevel %d\n", currentLevel);
-    bool isCorrect;
-    //update the colour of the LED based on the player's lives
-    set_corrrect_led();
-    while(correctAnswerStreak != 5 && lives != 0){
-        //Reset input
-        input = "";
-        flag = 0;
-        //If correct, correctAnswers and lives +1 (up to 3 lives)
-        //If incorrect, lives--
-
-        isCorrect = false;
-        //produce a random letter from our letter_array (0 to 37)
-        struct letter l;
-        srand(seed);
-        int index = rand() % 36;
-
-        switch(currentLevel){
-            case 1:
-                l = letter_array[index];
-                //print a line of text giving the player their letter AND the morse code variant (see the letter struct for reference)
-                printf("\nType the morse code for the letter\n'%c' -> \"%s\"\n", l.letter, l.morse_code);
-                playerInput(l);
-                if(strcmp(input, l.morse_code) == 0)
-                    isCorrect = true; 
-                break;
-            case 2:
-                l = letter_array[index];
-                //print a line of text giving the player their letter AND the morse code variant (see the letter struct for reference)
-                printf("\nType the morse code for the letter\n'%c'\n", l.letter);
-                playerInput(l);
-                if(strcmp(input, l.morse_code) == 0)
-                    isCorrect = true; 
-                break;
-            case 3:
-                //print a line of text giving the player their word AND the morse code variant (see the letter struct for reference)
-                break;
-            case 4:
-                //print a line of text giving the player JUST their word
-                break;
-            default:
-                printf("Something went wrong. Sorry!\n");
-                break;
-        }
-
-        
-        if(isCorrect) {
-            printf("\nCorrect! \"%s\" is the morse code for '%c'\n", input, l.letter);
-            if(lives != 3)
-                lives++;
-            correctAnswerStreak++;
-            totalCorrectAnswers++;
-        }
-
-        else {
-            printf("\nOh no, that's not right. The morse code for '%c' is \"%s\". Try Again!\n", l.letter, l.morse_code);
-            correctAnswerStreak = 0;
-            lives--;
-        }
-
-        printf("\nCurrent Streak: %d\n", correctAnswerStreak);
-        //update the colour of the LED based on the player's lives
-        updateLED();
-        watchdog_update();
-    }
-    if(lives == 0 || currentLevel == 2)
-        gameFinished();
+void set_red_on(){
+    put_pixel(urgb_u32(0x3F,0x0,0x0));
 }
 
-void gameFinished(){
-    calculateStats(1);
-    if(lives == 0) set_red_on();
-    printf("\n\n\n\n\n\n\t\t*****************************\n");
-    printf("\t\t*                           *\n");
-    printf("\t\t* Enter .---- to play again *\n");
-    printf("\t\t* Enter ..--- to exit       *\n");
-    printf("\t\t*****************************\n");
-    currentIndex = -1;
-    main_asm();
-    if(currentIndex == 0){
-        printf("\t\tNo update detected\n\t\tProgram will now exit.");
-    }
-    if(strcmp(currentIndex, ".----")==0){
-        start_game();
-    }
-}
+
+// -------------------------------------- Game Logic --------------------------------------
 
 /**
  * @brief A function called upon in start the game function that
@@ -435,6 +377,22 @@ void calculateStats(int reset){
     }
     printf("\n\t\t**********************************\n\n");
 }
+
+void gameFinished(){
+    calculateStats(1);
+    if(lives == 0) set_red_on();
+    printf("\n\n\n\n\n\n\t\t*****************************\n");
+    printf("\t\t*                           *\n");
+    printf("\t\t* Enter .---- to play again *\n");
+    printf("\t\t* Enter ..--- to exit       *\n");
+    printf("\t\t*****************************\n");
+    main_asm();
+    if(strcmp(currentInput, ".----")==0){
+        start_game();
+    }
+}
+
+
 /**
  * @brief EXAMPLE - WS2812_RGB
  *        Simple example to initialise the NeoPixel RGB LED on
@@ -447,26 +405,21 @@ void calculateStats(int reset){
 int main()
 {
     // Initialise all STDIO as we will be using the GPIOs
-     stdio_init_all();
+    stdio_init_all();
+    morse_init();
+
 
     // Initialise the PIO interface with the WS2812 code
-    // PIO pio = pio0;
-    // uint offset = pio_add_program(pio, &ws2812_program);
-    // ws2812_program_init(pio, 0, offset, WS2812_PIN, 800000, IS_RGBW);
-
-    // Initialise the array of letters
-    letter_array_create();
-
-
+    PIO pio = pio0;
+    uint offset = pio_add_program(pio, &ws2812_program);
+    ws2812_program_init(pio, 0, offset, WS2812_PIN, 800000, IS_RGBW);
+    watchdog_enable(0x7fffff, 1); // Watchdog Enables to Max Timeout
 
     welcome();
     instructions();
-    main_asm();
-    printf("\n\n\n")
-    selectDifficulty();
-
     difficultyLevelInputs();
-    processInputData();
+    main_asm();
+    printf("\n\n\n");
 
     
     return (0);
