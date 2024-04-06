@@ -46,7 +46,8 @@ main_loop:
     str     r0, [r2]                                    @ Set alarmRun flag to false
     movs    r0, #3                                      @ Set param to End-Of-Input character
     movs    r1, #0                                      @ Set next char param to '\0'
-    @ bl      add_input                                 @ Call C function to add char to input
+    bl      add_input                                   @ Call C function to add char to input
+    bl      check_input
     pop     {pc}                                        @ Restore register, effectively returning to C
 
 init_gpio_buttons:
@@ -162,17 +163,17 @@ rise_edge:
     @ dash
     movs    r0, #1
     movs    r1, #0
-    @ bl    add_input
+    bl      add_input
     b       gpio_isr_clear
 dot:
     movs    r0, #0
     movs    r1, #0
-    @ bl    add_input
+    bl      add_input
     b       gpio_isr_clear
 space:
     movs    r0, #2
     movs    r1, #0
-    @ bl    add_input
+    bl      add_input
 gpio_isr_clear:
     ldr     r4, =(IO_BANK0_BASE + IO_BANK0_INTR2_OFFSET) @ Load INTR2 register address
     str     r7, [r4]                                    @ Clear pending GPIO 21 request
