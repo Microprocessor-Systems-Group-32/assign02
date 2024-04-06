@@ -2,6 +2,7 @@
 #include "hardware/regs/io_bank0.h"
 #include "hardware/regs/timer.h"
 #include "hardware/regs/m0plus.h"
+#include "hardware/regs/watchdog.h"
 
 .syntax unified                                                 @ Specify unified assembly syntax
 .cpu    cortex-m0plus                                           @ Specify CPU type is Cortex M0+
@@ -33,6 +34,7 @@ main_asm:
     push    {lr}
     bl      init_gpio_buttons                           @ Call subroutine to initialise GPIO buttons
     bl      install_irq_gpio                            @ Call subroutine to install GPIO interrupt handler
+    bl      watchdog_reset
     bl      install_irq_0                               @ Call subroutine to install ALARM0 interrupt handler
     wfi
 main_loop:
@@ -48,6 +50,16 @@ main_loop:
     movs    r1, #0                                      @ Set next char param to '\0'
     @ bl      add_input                                 @ Call C function to add char to input
     pop     {pc}                                        @ Restore register, effectively returning to C
+
+watchdog_reset:
+    push    {r4, r5, lr}
+    ldr     r4, =(WATCHDOG_BASE + WATCHDOG_CTRL_OFFSET)
+    ldr     r5, =0x40000000
+    str     r5, [r4]
+    ldr     r4, =(WATCHDOG_BASE + WATCHDOG_LOAD_OFFSET)
+    ldr     r5, =0xffffff
+    str     r5, [r4]
+    pop     {r4, r5, pc}
 
 init_gpio_buttons:
     push    {r0, r1, lr}                                @ Preserve registers
