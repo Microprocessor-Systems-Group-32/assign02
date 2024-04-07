@@ -265,6 +265,7 @@ void level_1()
         printf("YOU WIN!!!\n");
         wins++;
     }
+    set_blue_led();
     game_finished();
 }
 
@@ -455,9 +456,18 @@ void set_correct_led()
 /**
  * Sets the LED color to Red.
  */
-void set_red_on()
+void set_red_led()
 {
     put_pixel(urgb_u32(0x3F, 0x0, 0x0));
+}
+
+/**
+ * Sets the LED color to Blue.
+ */
+void set_blue_led()
+{
+    put_pixel(urgb_u32(0x0, 0x0, 0x3F));
+
 }
 
 // -------------------------------------- Game Logic --------------------------------------
@@ -480,22 +490,27 @@ void select_difficulty()
     if (strcmp(current_input, ".----") == 0)
     {
         current_level = 1;
+        // Turns Green to signify game in progress
+        set_correct_led();
         // level_1();
         return;
     }
     else if (strcmp(current_input, "..---") == 0)
     {
         current_level = 2;
+        set_correct_led();
         return;
     }
     else if (strcmp(current_input, "...--") == 0)
     {
         current_level = 3;
+        set_correct_led();
         return;
     }
     else if (strcmp(current_input, "....-") == 0)
     {
         current_level = 4;
+        set_correct_led();
         return;
     }
     else if (strcmp(current_input, ".....") == 0)
@@ -518,7 +533,6 @@ void check_input()
     // Handle for level select
     if (current_level == 0)
     {
-        set_correct_led();
         select_difficulty();
     }
     else if (current_level == 1)
@@ -592,7 +606,7 @@ void reset_game()
     remaining = 5;
     wrong_input = 0;
     current_level = 0;
-    set_correct_led();
+    set_blue_led();
 }
 
 /**
@@ -601,7 +615,7 @@ void reset_game()
  */
 void start_game()
 {
-    put_pixel(urgb_u32(0x00, 0x3F, 0x00)); // Set the RGB LED color to green
+    //put_pixel(urgb_u32(0x00, 0x3F, 0x00)); // Set the RGB LED color to green
 
     while (quit == 0)
     {
@@ -683,7 +697,7 @@ void game_finished()
 {
     calculate_stats(1);
     if (lives == 0)
-        set_red_on();
+        set_red_led();
     printf("\n\n\n\n\n\n\t*****************************\n");
     printf("\t*                           *\n");
     printf("\t* Enter .---- to play again *\n");
@@ -731,7 +745,7 @@ int main()
     welcome();
     instructions();
     difficulty_level_inputs();
-    set_correct_led();
+    set_blue_led();
 
     main_asm();
 
