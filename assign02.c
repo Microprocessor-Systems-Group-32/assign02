@@ -15,12 +15,9 @@
 
 // -------------------------------------- Global Variables --------------------------------------
 
-int initial_round = 1;
-int current_level = 0;
+int initial_round = 1; // Use this to only print instructions once on initial rounde
+int current_level = 0; // 0 = Level select, 1 - 4 = level X
 int highest_level = 0;
-int select_level = 0;
-
-int game_ongoing = 0;
 
 int quit = 0;
 
@@ -33,8 +30,8 @@ int wrong_input = 0;
 int remaining = 5;
 
 char current_input[20];
-int current_input_length = 0; // i = length of input sequence
-int char_to_solve = 0;
+int current_input_length = 0; // length of input sequence
+int char_to_solve = 0;        // The index (in the table) of the current character that the player needs to solve
 int input_complete = 0;
 
 // -------------------------------------- WS2812 RGB LED --------------------------------------
@@ -198,16 +195,6 @@ void morse_init()
 
 // -------------------------------------- Select Level --------------------------------------
 
-void level_select_true()
-{
-    select_level = 1;
-}
-
-void level_select_false()
-{
-    select_level = 0;
-}
-
 int select_random(int low, int high)
 {
     if (low > high)
@@ -234,6 +221,7 @@ void add_input(int input_type)
     {
     case 0:
     {
+        // Dot
         current_input[current_input_length] = '.';
         printf(".");
         current_input_length++;
@@ -241,6 +229,7 @@ void add_input(int input_type)
     }
     case 1:
     {
+        // Dash
         current_input[current_input_length] = '-';
         printf("-");
         current_input_length++;
@@ -248,6 +237,7 @@ void add_input(int input_type)
     }
     case 2:
     {
+        // Space
         current_input[current_input_length] = ' ';
         printf(" ");
         current_input_length++;
@@ -255,6 +245,7 @@ void add_input(int input_type)
     }
     case 3:
     {
+        // End Of Line (EOL)
         current_input[current_input_length] = '\0';
         printf("\n");
         current_input_length++;
@@ -351,6 +342,9 @@ void set_red_on()
 
 // -------------------------------------- Game Logic --------------------------------------
 
+/**
+ * @brief Clears the current input, making it ready for a new round
+ */
 void clear_input()
 {
     for (int i = 0; i < 20; i++)
@@ -358,6 +352,9 @@ void clear_input()
     current_input_length = 0;
 }
 
+/**
+ * @brief Handles the level select, based on the current input
+ */
 void select_difficulty()
 {
     if (strcmp(current_input, ".----") == 0)
@@ -393,6 +390,9 @@ void select_difficulty()
     }
 }
 
+/**
+ * @brief Based on the current level, check if the input is valid and progress as necessary
+ */
 void check_input()
 {
     // Handle for level select
@@ -405,13 +405,11 @@ void check_input()
         if (strcmp(current_input, table[char_to_solve].code) == 0)
         {
             remaining--;
-            game_ongoing = 0;
             printf("CORRECT!\n\n");
         }
         else
         {
             lives--;
-            game_ongoing = 0;
             printf("WRONG! :((\n\n");
         }
     }
@@ -440,28 +438,36 @@ void level_1()
     printf("-----------\n");
     printf("| Level 1 |\n");
     printf("-----------\n\n");
+
     while (remaining > 0 && lives > 0)
     {
         char_to_solve = select_random(0, 35);
         printf("Enter %c = %s in Morse Code\n", table[char_to_solve].letter, table[char_to_solve].code);
-        game_ongoing = 1;
         while (input_complete == 0)
         {
+            // Empty while to stall the game until the timer interrupt fires
         }
         input_complete = 0;
         check_input();
     }
 
+    // At the end of Level 1, check if we finished due to running out of lives
+    // or due to getting 5 answers in a row correct
     if (lives == 0)
     {
+        // Ran out of lives
         printf("YOU LOSE!!!\n");
     }
     else
     {
+        // Completed 5 corret questions
         printf("YOU WIN!!!\n");
     }
 }
 
+/**
+ * @brief Resets the game for a new round
+ */
 void reset_game()
 {
     right_input = 0;
@@ -470,32 +476,48 @@ void reset_game()
     wrong_input = 0;
 }
 
+/**
+ * @brief Starts playing the game and doesn't quit out of this routinen
+ * until the player specifies the 'quit' character sequence
+ */
 void start_game()
 {
     put_pixel(urgb_u32(0x00, 0x3F, 0x00)); // Set the RGB LED color to green
 
     while (quit == 0)
     {
+        // Dont print instructions again if it's the initial round
         if (initial_round)
             initial_round = 0;
         else
             difficulty_level_inputs();
+
+        // Stall for level select
         while (input_complete == 0)
         {
         }
+
+        // Check for level
         check_input();
         input_complete = 0;
 
         if (current_level == 1)
-        {
             level_1();
-        }
+        else if (current_level == 2)
+        {
+        } // level_2();
+        else if (current_level == 3)
+        {
+        } // level_3();
+        else if (current_level == 4)
+        {
+        } // level_4();
 
         current_level = 0;
         reset_game();
     }
 
-    printf("GOODBYE :)\n");
+    printf("GOODBYE :(\n");
 }
 
 /**
@@ -546,6 +568,9 @@ void game_finished()
     }
 }
 
+/**
+ * @brief Updates the watchdog to prevent chip reset
+ */
 void arm_watchdog_update()
 {
     watchdog_update();
