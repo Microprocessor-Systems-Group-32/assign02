@@ -104,8 +104,24 @@ void asm_gpio_set_irq(uint pin)
     gpio_set_irq_enabled(pin, GPIO_IRQ_EDGE_RISE, true);
 }
 
+// -------------------------------------- Watchdog Timer --------------------------------------
+
+/**
+ * @brief Updates the watchdog to prevent chip reset
+ */
+void arm_watchdog_update()
+{
+    watchdog_update();
+}
+
+
 // -------------------------------------- Letter Struct --------------------------------------
 
+/*
+ * Initializes the morse code table.
+ * The table contains 36 entries, each representing a letter or a digit.
+ * Each entry consists of a letter or a digit and its corresponding Morse code.
+ */
 #define TABLE_SIZE 36
 
 typedef struct morse
@@ -117,7 +133,7 @@ morse table[TABLE_SIZE];
 
 void morse_init()
 {
-
+    // Initialize the table with letters A-Z and digits 0-9
     table[0].letter = 'A';
     table[1].letter = 'B';
     table[2].letter = 'C';
@@ -155,6 +171,7 @@ void morse_init()
     table[34].letter = '8';
     table[35].letter = '9';
 
+    // Initialize the Morse code for each letter or digit
     table[0].code = ".-";
     table[1].code = "-...";
     table[2].code = "-.-.";
@@ -195,6 +212,13 @@ void morse_init()
 
 // -------------------------------------- Select Level --------------------------------------
 
+/**
+ * Generates a random integer between the given low and high values (inclusive).
+ *
+ * @param low The lower bound of the range.
+ * @param high The upper bound of the range.
+ * @return A random integer between low and high.
+ */
 int select_random(int low, int high)
 {
     if (low > high)
@@ -202,7 +226,43 @@ int select_random(int low, int high)
     return low + (rand() % (high - low + 1));
 }
 
-// Levels
+/**
+ * Executes level 1 of the game.
+ * The player is presented with a series of Morse code challenges and must input the correct answers.
+ * The level continues until the player runs out of lives or answers 5 questions correctly in a row.
+ * At the end of the level, the outcome (win or lose) is displayed.
+ */
+void level_1()
+{
+    printf("-----------\n");
+    printf("| Level 1 |\n");
+    printf("-----------\n\n");
+
+    while (remaining > 0 && lives > 0)
+    {
+        char_to_solve = select_random(0, 35);
+        printf("Enter %c = %s in Morse Code\n", table[char_to_solve].letter, table[char_to_solve].code);
+        while (input_complete == 0)
+        {
+            // Empty while to stall the game until the timer interrupt fires
+        }
+        input_complete = 0;
+        check_input();
+    }
+
+    // At the end of Level 1, check if we finished due to running out of lives
+    // or due to getting 5 answers in a row correct
+    if (lives == 0)
+    {
+        // Ran out of lives
+        printf("YOU LOSE!!!\n");
+    }
+    else
+    {
+        // Completed 5 corret questions
+        printf("YOU WIN!!!\n");
+    }
+}
 
 // -------------------------------------- Inputs --------------------------------------
 
@@ -259,6 +319,9 @@ void add_input(int input_type)
 
 // -------------------------------------- Display Message --------------------------------------
 
+/**
+ * Displays a welcome message and instructions for the Morse code game.
+ */
 void welcome()
 {
     printf("__        _______ _     ____ ___  __  __ _____ \n");
@@ -276,6 +339,9 @@ void welcome()
     printf("       PRESS THE GPIO PIN 21 TO CONTINUE        \n");
 }
 
+/**
+ * Displays instructions on how to play the Morse code game.
+ */
 void instructions()
 {
     printf("\n                 HOW TO PLAY\n");
@@ -290,6 +356,9 @@ void instructions()
     printf("\n");
 }
 
+/**
+ * Displays the difficulty level inputs for the Morse code game.
+ */
 void difficulty_level_inputs()
 {
     printf("\n\n\t*****************************\n");
@@ -306,6 +375,14 @@ void difficulty_level_inputs()
 
 // -------------------------------------- LED --------------------------------------
 
+/**
+ * Sets the correct LED color based on the current level and number of lives.
+ * If the current level is not 0, the LED color is determined by the number of lives:
+ * - 3 lives: Green
+ * - 2 lives: Yellow
+ * - 1 life: Red
+ * If the current level is 0, the LED color is set to Blue.
+ */
 void set_corrrect_led()
 {
     if (current_level != 0)
@@ -335,6 +412,9 @@ void set_corrrect_led()
     }
 }
 
+/**
+ * Sets the LED color to Red.
+ */
 void set_red_on()
 {
     put_pixel(urgb_u32(0x3F, 0x0, 0x0));
@@ -433,38 +513,6 @@ void check_input()
     clear_input();
 }
 
-void level_1()
-{
-    printf("-----------\n");
-    printf("| Level 1 |\n");
-    printf("-----------\n\n");
-
-    while (remaining > 0 && lives > 0)
-    {
-        char_to_solve = select_random(0, 35);
-        printf("Enter %c = %s in Morse Code\n", table[char_to_solve].letter, table[char_to_solve].code);
-        while (input_complete == 0)
-        {
-            // Empty while to stall the game until the timer interrupt fires
-        }
-        input_complete = 0;
-        check_input();
-    }
-
-    // At the end of Level 1, check if we finished due to running out of lives
-    // or due to getting 5 answers in a row correct
-    if (lives == 0)
-    {
-        // Ran out of lives
-        printf("YOU LOSE!!!\n");
-    }
-    else
-    {
-        // Completed 5 corret questions
-        printf("YOU WIN!!!\n");
-    }
-}
-
 /**
  * @brief Resets the game for a new round
  */
@@ -551,6 +599,10 @@ void calculate_stats(int reset)
     printf("\n\t\t**********************************\n\n");
 }
 
+/**
+ * Function to handle game completion.
+ * Calculates game statistics, displays game over message, and prompts for replay or exit.
+ */
 void game_finished()
 {
     calculate_stats(1);
@@ -568,13 +620,7 @@ void game_finished()
     }
 }
 
-/**
- * @brief Updates the watchdog to prevent chip reset
- */
-void arm_watchdog_update()
-{
-    watchdog_update();
-}
+// -------------------------------------- Main --------------------------------------
 
 /**
  * @brief EXAMPLE - WS2812_RGB
