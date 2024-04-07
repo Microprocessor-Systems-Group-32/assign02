@@ -241,7 +241,9 @@ void level_1()
     while (remaining > 0 && lives > 0)
     {
         char_to_solve = select_random(0, 35);
-        printf("Enter %c = %s in Morse Code\n", table[char_to_solve].letter, table[char_to_solve].code);
+        printf("---------------------------------\n");
+        printf("| Enter %c = %s in Morse Code |\n", table[char_to_solve].letter, table[char_to_solve].code);
+        printf("---------------------------------\n");
         while (input_complete == 0)
         {
             // Empty while to stall the game until the timer interrupt fires
@@ -261,7 +263,9 @@ void level_1()
     {
         // Completed 5 corret questions
         printf("YOU WIN!!!\n");
+        wins++;
     }
+    game_finished();
 }
 
 // -------------------------------------- Inputs --------------------------------------
@@ -485,12 +489,21 @@ void check_input()
         if (strcmp(current_input, table[char_to_solve].code) == 0)
         {
             remaining--;
-            printf("CORRECT!\n\n");
+            printf("\nCORRECT!\n\n");
+            printf("Remaining: %d\n", remaining);
+            printf("Lives: %d\n\n\n", lives);
+            right_input++;
+            set_corrrect_led();
+
         }
         else
         {
             lives--;
-            printf("WRONG! :((\n\n");
+            printf("\nWRONG! :((\n\n");
+            printf("Remaining: %d\n", remaining);
+            printf("Lives: %d\n\n\n", lives);
+            wrong_input++;
+            set_corrrect_led();
         }
     }
     else if (current_level == 2)
@@ -575,13 +588,14 @@ void start_game()
  */
 void calculate_stats(int reset)
 {
-    printf("\n\n\t\t***************STATS***************\n\n");
-    printf("\n\t\t*Attempts: \t\t\t\t%d*", right_input + wrong_input);
-    printf("\n\t\t*Correct: \t\t\t\t%d*", right_input);
-    printf("\n\t\t*Incorrect: \t\t\t\t%d*", wrong_input);
-    printf("\n\t\t*Accuracy: \t\t\t\t%.2f%%*", (float)right_input / (right_input + wrong_input) * 100);
-    printf("\n\t\t*Win Streak: \t\t\t\t%d*", wins);
-    printf("\n\t\t*Lives Left: \t\t\t\t%d*", lives);
+    printf("\n\n********************* STATS *********************");
+    printf("\n*\t\t\t\t\t\t*");
+    printf("\n*\tAttempts: \t\t\t%d\t*", right_input + wrong_input);
+    printf("\n*\tCorrect: \t\t\t%d\t*", right_input);
+    printf("\n*\tIncorrect: \t\t\t%d\t*", wrong_input);
+    printf("\n*\tAccuracy: \t\t\t%.2f%%\t*", (float)right_input / (right_input + wrong_input) * 100);
+    printf("\n*\tWin Streak: \t\t\t%d\t*", wins);
+    printf("\n*\tLives Left: \t\t\t%d\t*", lives);
     if (right_input != 0 || wrong_input != 0)
     {
         float stat = right_input / (right_input + wrong_input) * 100;
@@ -589,14 +603,15 @@ void calculate_stats(int reset)
         {
             right_input = 0;
             wrong_input = 0;
-            printf("\t\t*Correct %% for this level: \t%.2f%%*\n", stat);
+            printf("\n\t\t*Correct %% for this level: \t%.2f%%*\n", stat);
         }
         else
         {
-            printf("\t\t*Correct Percent :\t\t\t%.2f%%*\n", stat);
+            printf("\n\t\t*Correct Percent :\t\t\t%.2f%%*\n", stat);
         }
     }
-    printf("\n\t\t**********************************\n\n");
+    printf("\n*\t\t\t\t\t\t*");
+    printf("\n*************************************************\n\n");
 }
 
 /**
