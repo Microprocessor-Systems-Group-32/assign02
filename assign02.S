@@ -35,19 +35,21 @@ main_asm:
     bl      install_irq_gpio                            @ Call subroutine to install GPIO interrupt handler
     bl      install_irq_0                               @ Call subroutine to install ALARM0 interrupt handler
     wfi
-main_loop:
     bl      set_alarm_timing                            @ Call subroutine to set alarm delay
-    wfi                                                 @ Wait for interrupt
-    ldr     r2, =lalarmRun                              @ Load address of alarm bool
-    ldr     r1, [r2]                                    @ Load alarm bool
-    cmp     r1, #1                                      @ If (alarm has run)
-    bne     main_loop                                   @ Else, alarm hasn't run
-    movs    r0, #0                                      @ Move 0 into r0
-    str     r0, [r2]                                    @ Set alarmRun flag to false
-    movs    r0, #3                                      @ Set param to End-Of-Input character
-    movs    r1, #0                                      @ Set next char param to '\0'
-    @ bl      add_input                                 @ Call C function to add char to input
-    pop     {pc}                                        @ Restore register, effectively returning to C
+    pop     {pc}
+main_loop:
+    @ wfi                                                 @ Wait for interrupt
+    @ ldr     r2, =lalarmRun                              @ Load address of alarm bool
+    @ ldr     r1, [r2]                                    @ Load alarm bool
+    @ cmp     r1, #1                                      @ If (alarm has run)
+    @ bne     main_loop                                   @ Else, alarm hasn't run
+    @ movs    r0, #0                                      @ Move 0 into r0
+    @ str     r0, [r2]                                    @ Set alarmRun flag to false
+    @ movs    r0, #3                                      @ Set param to End-Of-Input character
+    @ movs    r1, #0                                      @ Set next char param to '\0'
+    @ bl      add_input                                   @ Call C function to add char to input
+    @ bl      check_input
+    @ pop     {pc}                                        @ Restore register, effectively returning to C
 
 init_gpio_buttons:
     push    {r0, r1, lr}                                @ Preserve registers
@@ -118,14 +120,19 @@ irq_0_isr:
     ldr     r4, =lalarmRun                              @ Load alarm bool address
     movs    r5, #1                                      @ Move 1 into r5
     str     r5, [r4]                                    @ Set alarmRun flag to true
-    bl      set_alarm_timing                            @ Enable the timer interrupt again
+    @ bl      set_alarm_timing                            @ Enable the timer interrupt again
+    movs    r0, #3                                      @ Set param to End-Of-Input character
+    movs    r1, #0                                      @ Set next char param to '\0'
+    bl      add_input                                   @ Call C function to add char to input
+    @ bl      check_input
     pop     {r4, r5, pc}                                @ Restore registers
 
 @ GPIO interrupt service handler routine
 .thumb_func
 gpio_isr:
     push    {lr}
-    @@@ TODO: Need a Watchdog update to prevent resets @@@
+    bl      set_alarm_timing
+    bl      arm_watchdog_update
     ldr     r4, =(IO_BANK0_BASE + IO_BANK0_INTR2_OFFSET) @ Load INTR2 register address
     ldr     r5, =GPIO_BTN_MSK_FALL                      @ Load value to write to GPIO 21 bit 
     ldr     r6, [r4]                                    @ Load the INTR2 register
@@ -162,17 +169,17 @@ rise_edge:
     @ dash
     movs    r0, #1
     movs    r1, #0
-    @ bl    add_input
+    bl      add_input
     b       gpio_isr_clear
 dot:
     movs    r0, #0
     movs    r1, #0
-    @ bl    add_input
+    bl      add_input
     b       gpio_isr_clear
 space:
     movs    r0, #2
     movs    r1, #0
-    @ bl    add_input
+    bl      add_input
 gpio_isr_clear:
     ldr     r4, =(IO_BANK0_BASE + IO_BANK0_INTR2_OFFSET) @ Load INTR2 register address
     str     r7, [r4]                                    @ Clear pending GPIO 21 request

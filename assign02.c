@@ -1,16 +1,38 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <string.h>
 
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
+#include "hardware/watchdog.h"
 #include "ws2812.pio.h"
 
 #define IS_RGBW true  // Will use RGBW format
 #define NUM_PIXELS 1  // There is 1 WS2812 device in the chain
 #define WS2812_PIN 28 // The GPIO pin that the WS2812 connected to
 
+// -------------------------------------- Global Variables --------------------------------------
+
+int initial_round = 1; // Use this to only print instructions once on initial rounde
+int current_level = 0; // 0 = Level select, 1 - 4 = level X
+int highest_level = 0;
+
+int quit = 0;
+
+int lives = 3;
+
+int wins = 0;
+int total_correct_answers = 0;
+int right_input = 0;
+int wrong_input = 0;
+int remaining = 5;
+
+char current_input[20];
+int current_input_length = 0; // length of input sequence
+int char_to_solve = 0;        // The index (in the table) of the current character that the player needs to solve
+int input_complete = 0;
 
 // -------------------------------------- WS2812 RGB LED --------------------------------------
 
@@ -44,7 +66,6 @@ static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b)
            ((uint32_t)(g) << 16) |
            (uint32_t)(b);
 }
-
 
 // ------------------------------ Declare Main Assembly Entry Before use ------------------------------
 
@@ -82,40 +103,6 @@ void asm_gpio_set_irq(uint pin)
     gpio_set_irq_enabled(pin, GPIO_IRQ_EDGE_FALL, true);
     gpio_set_irq_enabled(pin, GPIO_IRQ_EDGE_RISE, true);
 }
-
-// -------------------------------------- Button Timer --------------------------------------
-
-// Get timestamp in milliseconds
-int get_time_in_ms()
-{
-    absolute_time_t time = get_absolute_time();
-    return to_ms_since_boot(time);
-}
-
-// Find time difference in milliseconds
-int get_time_difference(int end, int start)
-{
-    return (end - start);
-}
-
-// -------------------------------------- Global Variables --------------------------------------
-
-int currentLevel = 0;
-int highestLevel = 0;
-int selectLevel = 0;
-
-int lives = 3;
-
-int wins = 0;
-int totalCorrectAnswers = 0;
-int rightInput = 0;
-int wrongInput = 0;
-int remaining = 5;
-
-char currentInput[20];
-int i = 0; // i = length of input sequence
-int tmpIndex = 0;
-int inputComplete = 0;
 
 // -------------------------------------- Letter Struct --------------------------------------
 
@@ -206,55 +193,9 @@ void morse_init()
     table[35].code = "----.";
 }
 
-
-// -------------------------------------- Start Game --------------------------------------
-void start_game()
-{
-    put_pixel(urgb_u32(0x00, 0x3F, 0x00)); // Set the RGB LED color to green
-    rightInput = 0;
-    lives = 3;
-    remaining = 5;
-    wrongInput = 0;
-}
-
 // -------------------------------------- Select Level --------------------------------------
 
-void level_select_true(){
-    selectLevel = 1;
-}
-
-
-
-void level_select_false(){
-    selectLevel = 0;
-}
-
-void selectDifficulty(){
-    while(true){
-        if(strcmp(currentInput, ".----")==0){
-            currentLevel = 1;
-            return;
-        }
-        else if(strcmp(currentInput, "..---")==0){
-            currentLevel = 2;
-            return;
-        }
-        else if(strcmp(currentInput, "...--")==0){
-            currentLevel = 3;
-            return;
-        }
-        else if(strcmp(currentInput, "...--")==0){
-            currentLevel = 4;
-            return;
-        }
-        else{
-            printf("Error: Invalid input.");
-            return;
-        }
-    }
-}
-
-int selectRandom(int low, int high)
+int select_random(int low, int high)
 {
     if (low > high)
         return high;
@@ -263,21 +204,63 @@ int selectRandom(int low, int high)
 
 // Levels
 
-
 // -------------------------------------- Inputs --------------------------------------
 
-void playerInput(){
-    // ToDo
+/**
+ * @brief Takes input from the buffer and adds it to the current input string
+ *
+ * @param input_type Specifies the input receives (0 = . | 1 = - | 2 = \s | 3 = EOL)
+ * @param
+ */
+void add_input(int input_type)
+{
+    if (current_input_length == 20)
+        return;
+
+    switch (input_type)
+    {
+    case 0:
+    {
+        // Dot
+        current_input[current_input_length] = '.';
+        printf(".");
+        current_input_length++;
+        break;
+    }
+    case 1:
+    {
+        // Dash
+        current_input[current_input_length] = '-';
+        printf("-");
+        current_input_length++;
+        break;
+    }
+    case 2:
+    {
+        // Space
+        current_input[current_input_length] = ' ';
+        printf(" ");
+        current_input_length++;
+        break;
+    }
+    case 3:
+    {
+        // End Of Line (EOL)
+        current_input[current_input_length] = '\0';
+        printf("\n");
+        current_input_length++;
+        input_complete = 1;
+        break;
+    }
+    default:
+        break;
+    }
 }
-
-
-
-
-
 
 // -------------------------------------- Display Message --------------------------------------
 
-void welcome(){
+void welcome()
+{
     printf("__        _______ _     ____ ___  __  __ _____ \n");
     printf("\\ \\      / / ____| |   / ___/ _ \\|  \\/  | ____| \n");
     printf(" \\ \\ /\\ / /|  _| | |  | |  | | | | |\\/| |  _|  \n");
@@ -293,7 +276,8 @@ void welcome(){
     printf("       PRESS THE GPIO PIN 21 TO CONTINUE        \n");
 }
 
-void instructions(){
+void instructions()
+{
     printf("\n                 HOW TO PLAY\n");
     printf("You must enter the correct morse code sequence \n");
     printf("There are 4 levels in total - each level is 5 rounds!\n");
@@ -306,92 +290,291 @@ void instructions(){
     printf("\n");
 }
 
-void difficultyLevelInputs(){
+void difficulty_level_inputs()
+{
     printf("\n\n\t*****************************\n");
     printf("\t*                           *\n");
     printf("\t* Enter .---- for Level 1   *\n");
     printf("\t* Enter ..--- for Level 2   *\n");
     printf("\t* Enter ...-- for Level 3   *\n");
     printf("\t* Enter ....- for Level 4   *\n");
+    printf("\t*                           *\n");
+    printf("\t* Enter ..... to exit       *\n");
+    printf("\t*                           *\n");
     printf("\t*****************************\n");
 }
 
 // -------------------------------------- LED --------------------------------------
 
-void set_corrrect_led(){
-    if(currentLevel != 0){
-        switch(lives){
-            case 3:
-                // Set Green
-                put_pixel(urgb_u32(0x0,0x3F,0x0));
-                break;
-            case 2:
-                // Set Yellow
-                put_pixel(urgb_u32(0x3F,0x3F,0x0));
-                break;
-            case 1:
-                // Set Red
-                put_pixel(urgb_u32(0x3F,0x0,0x0));
-                break;
-            default:
-                break;
+void set_corrrect_led()
+{
+    if (current_level != 0)
+    {
+        switch (lives)
+        {
+        case 3:
+            // Set Green
+            put_pixel(urgb_u32(0x0, 0x3F, 0x0));
+            break;
+        case 2:
+            // Set Yellow
+            put_pixel(urgb_u32(0x3F, 0x3F, 0x0));
+            break;
+        case 1:
+            // Set Red
+            put_pixel(urgb_u32(0x3F, 0x0, 0x0));
+            break;
+        default:
+            break;
         }
     }
-    else{
+    else
+    {
         // Set Blue
-        put_pixel(urgb_u32(0x0,0x0,0x3F));
+        put_pixel(urgb_u32(0x0, 0x0, 0x3F));
     }
 }
 
-void set_red_on(){
-    put_pixel(urgb_u32(0x3F,0x0,0x0));
+void set_red_on()
+{
+    put_pixel(urgb_u32(0x3F, 0x0, 0x0));
 }
 
-
 // -------------------------------------- Game Logic --------------------------------------
+
+/**
+ * @brief Clears the current input, making it ready for a new round
+ */
+void clear_input()
+{
+    for (int i = 0; i < 20; i++)
+        current_input[i] = 0;
+    current_input_length = 0;
+}
+
+/**
+ * @brief Handles the level select, based on the current input
+ */
+void select_difficulty()
+{
+    if (strcmp(current_input, ".----") == 0)
+    {
+        current_level = 1;
+        // level_1();
+        return;
+    }
+    else if (strcmp(current_input, "..---") == 0)
+    {
+        current_level = 2;
+        return;
+    }
+    else if (strcmp(current_input, "...--") == 0)
+    {
+        current_level = 3;
+        return;
+    }
+    else if (strcmp(current_input, "....-") == 0)
+    {
+        current_level = 4;
+        return;
+    }
+    else if (strcmp(current_input, ".....") == 0)
+    {
+        quit = 1;
+        return;
+    }
+    else
+    {
+        printf("Error: Invalid input.");
+        return;
+    }
+}
+
+/**
+ * @brief Based on the current level, check if the input is valid and progress as necessary
+ */
+void check_input()
+{
+    // Handle for level select
+    if (current_level == 0)
+    {
+        select_difficulty();
+    }
+    else if (current_level == 1)
+    {
+        if (strcmp(current_input, table[char_to_solve].code) == 0)
+        {
+            remaining--;
+            printf("CORRECT!\n\n");
+        }
+        else
+        {
+            lives--;
+            printf("WRONG! :((\n\n");
+        }
+    }
+    else if (current_level == 2)
+    {
+        // Level 2
+    }
+    else if (current_level == 3)
+    {
+        // Level 3
+    }
+    else if (current_level == 4)
+    {
+        // Level 4
+    }
+    else
+    {
+        printf("ERROR");
+    }
+
+    clear_input();
+}
+
+void level_1()
+{
+    printf("-----------\n");
+    printf("| Level 1 |\n");
+    printf("-----------\n\n");
+
+    while (remaining > 0 && lives > 0)
+    {
+        char_to_solve = select_random(0, 35);
+        printf("Enter %c = %s in Morse Code\n", table[char_to_solve].letter, table[char_to_solve].code);
+        while (input_complete == 0)
+        {
+            // Empty while to stall the game until the timer interrupt fires
+        }
+        input_complete = 0;
+        check_input();
+    }
+
+    // At the end of Level 1, check if we finished due to running out of lives
+    // or due to getting 5 answers in a row correct
+    if (lives == 0)
+    {
+        // Ran out of lives
+        printf("YOU LOSE!!!\n");
+    }
+    else
+    {
+        // Completed 5 corret questions
+        printf("YOU WIN!!!\n");
+    }
+}
+
+/**
+ * @brief Resets the game for a new round
+ */
+void reset_game()
+{
+    right_input = 0;
+    lives = 3;
+    remaining = 5;
+    wrong_input = 0;
+}
+
+/**
+ * @brief Starts playing the game and doesn't quit out of this routinen
+ * until the player specifies the 'quit' character sequence
+ */
+void start_game()
+{
+    put_pixel(urgb_u32(0x00, 0x3F, 0x00)); // Set the RGB LED color to green
+
+    while (quit == 0)
+    {
+        // Dont print instructions again if it's the initial round
+        if (initial_round)
+            initial_round = 0;
+        else
+            difficulty_level_inputs();
+
+        // Stall for level select
+        while (input_complete == 0)
+        {
+        }
+
+        // Check for level
+        check_input();
+        input_complete = 0;
+
+        if (current_level == 1)
+            level_1();
+        else if (current_level == 2)
+        {
+        } // level_2();
+        else if (current_level == 3)
+        {
+        } // level_3();
+        else if (current_level == 4)
+        {
+        } // level_4();
+
+        current_level = 0;
+        reset_game();
+    }
+
+    printf("GOODBYE :(\n");
+}
 
 /**
  * @brief A function called upon in start the game function that
  * calculates your overall accuracy throughout the game by
  * summing your total attempts over the total correct attempts.
-*/
-
-void calculateStats(int reset){
+ */
+void calculate_stats(int reset)
+{
     printf("\n\n\t\t***************STATS***************\n\n");
-    printf("\n\t\t*Attempts: \t\t\t\t%d*", rightInput+wrongInput);
-    printf("\n\t\t*Correct: \t\t\t\t%d*", rightInput);
-    printf("\n\t\t*Incorrect: \t\t\t\t%d*", wrongInput);
-    printf("\n\t\t*Accuracy: \t\t\t\t%.2f%%*", (float)rightInput/(rightInput+wrongInput)*100);
+    printf("\n\t\t*Attempts: \t\t\t\t%d*", right_input + wrong_input);
+    printf("\n\t\t*Correct: \t\t\t\t%d*", right_input);
+    printf("\n\t\t*Incorrect: \t\t\t\t%d*", wrong_input);
+    printf("\n\t\t*Accuracy: \t\t\t\t%.2f%%*", (float)right_input / (right_input + wrong_input) * 100);
     printf("\n\t\t*Win Streak: \t\t\t\t%d*", wins);
     printf("\n\t\t*Lives Left: \t\t\t\t%d*", lives);
-    if(rightInput!=0 || wrongInput!=0){
-        float stat = rightInput/(rightInput+wrongInput)*100;
-        if(reset){
-            rightInput = 0;
-            wrongInput = 0;
+    if (right_input != 0 || wrong_input != 0)
+    {
+        float stat = right_input / (right_input + wrong_input) * 100;
+        if (reset)
+        {
+            right_input = 0;
+            wrong_input = 0;
             printf("\t\t*Correct %% for this level: \t%.2f%%*\n", stat);
         }
-        else{
+        else
+        {
             printf("\t\t*Correct Percent :\t\t\t%.2f%%*\n", stat);
         }
     }
     printf("\n\t\t**********************************\n\n");
 }
 
-void gameFinished(){
-    calculateStats(1);
-    if(lives == 0) set_red_on();
+void game_finished()
+{
+    calculate_stats(1);
+    if (lives == 0)
+        set_red_on();
     printf("\n\n\n\n\n\n\t\t*****************************\n");
     printf("\t\t*                           *\n");
     printf("\t\t* Enter .---- to play again *\n");
     printf("\t\t* Enter ..--- to exit       *\n");
     printf("\t\t*****************************\n");
     main_asm();
-    if(strcmp(currentInput, ".----")==0){
+    if (strcmp(current_input, ".----") == 0)
+    {
         start_game();
     }
 }
 
+/**
+ * @brief Updates the watchdog to prevent chip reset
+ */
+void arm_watchdog_update()
+{
+    watchdog_update();
+}
 
 /**
  * @brief EXAMPLE - WS2812_RGB
@@ -404,10 +587,10 @@ void gameFinished(){
  */
 int main()
 {
+    srand(time(NULL));
     // Initialise all STDIO as we will be using the GPIOs
     stdio_init_all();
     morse_init();
-
 
     // Initialise the PIO interface with the WS2812 code
     PIO pio = pio0;
@@ -417,10 +600,13 @@ int main()
 
     welcome();
     instructions();
-    difficultyLevelInputs();
+    difficulty_level_inputs();
+
     main_asm();
+
+    start_game();
+
     printf("\n\n\n");
 
-    
     return (0);
 }
