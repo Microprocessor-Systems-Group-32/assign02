@@ -37,19 +37,6 @@ main_asm:
     wfi
     bl      set_alarm_timing                            @ Call subroutine to set alarm delay
     pop     {pc}
-main_loop:
-    @ wfi                                                 @ Wait for interrupt
-    @ ldr     r2, =lalarmRun                              @ Load address of alarm bool
-    @ ldr     r1, [r2]                                    @ Load alarm bool
-    @ cmp     r1, #1                                      @ If (alarm has run)
-    @ bne     main_loop                                   @ Else, alarm hasn't run
-    @ movs    r0, #0                                      @ Move 0 into r0
-    @ str     r0, [r2]                                    @ Set alarmRun flag to false
-    @ movs    r0, #3                                      @ Set param to End-Of-Input character
-    @ movs    r1, #0                                      @ Set next char param to '\0'
-    @ bl      add_input                                   @ Call C function to add char to input
-    @ bl      check_input
-    @ pop     {pc}                                        @ Restore register, effectively returning to C
 
 init_gpio_buttons:
     push    {r0, r1, lr}                                @ Preserve registers
@@ -141,7 +128,6 @@ finish_irq0:
 .thumb_func
 gpio_isr:
     push    {lr}
-    bl      set_alarm_timing
     bl      arm_watchdog_update
     ldr     r4, =(IO_BANK0_BASE + IO_BANK0_INTR2_OFFSET) @ Load INTR2 register address
     ldr     r5, =GPIO_BTN_MSK_FALL                      @ Load value to write to GPIO 21 bit 
@@ -173,10 +159,6 @@ rise_edge:
     ldr     r1, =LONG_PRESS
     cmp     r0, r1
     blt     dot
-    ldr     r1, =LONG_PRESS_SPACE
-    cmp     r0, r1
-    bge     space
-    @ dash
     movs    r0, #1
     movs    r1, #0
     bl      add_input
@@ -185,12 +167,11 @@ dot:
     movs    r0, #0
     movs    r1, #0
     bl      add_input
-    b       gpio_isr_clear
-space:
-    movs    r0, #2
-    movs    r1, #0
-    bl      add_input
 gpio_isr_clear:
+    ldr     r5, =lalarmRun
+    ldr     r6, =#0
+    str     r6, [r5]
+    bl      set_alarm_timing
     ldr     r4, =(IO_BANK0_BASE + IO_BANK0_INTR2_OFFSET) @ Load INTR2 register address
     str     r7, [r4]                                    @ Clear pending GPIO 21 request
     pop     {pc}                                        @ Restore register
