@@ -13,7 +13,7 @@
 
 .equ    DFLT_TIME, 0x0
 .equ    DFLT_ALARM_RUN, 0
-.equ    DFLT_ALARM_TIME, 2000000                        @ Specify the default alarm timeout
+.equ    DFLT_ALARM_TIME, 1000000                        @ Specify the default alarm timeout
 
 .equ    LONG_PRESS, 250000
 .equ    LONG_PRESS_SPACE, 1000000
@@ -113,19 +113,29 @@ enable_interrupt:
 @ Timer interrupt service handler routine
 .thumb_func
 irq_0_isr:
-    push    {r4, r5, lr}                                @ Restore registers
+    push    {r4-r6, lr}                                @ Restore registers
     ldr     r4, =(TIMER_BASE + TIMER_INTR_OFFSET)       @ Load address of TIMER raw interrupts register
     ldr     r5, =0x1                                    @ Load appropriate value to write TIMER0 bit
     str     r5, [r4]                                    @ Acknowledge interrupt as handled (by writing the TIMER0 bit)
     ldr     r4, =lalarmRun                              @ Load alarm bool address
-    movs    r5, #1                                      @ Move 1 into r5
-    str     r5, [r4]                                    @ Set alarmRun flag to true
-    @ bl      set_alarm_timing                            @ Enable the timer interrupt again
+    ldr     r5, [r4]
+    cmp     r5, #1
+    bne     irq_space
+    ldr     r5, =#0
+    str     r5, [r4]
     movs    r0, #3                                      @ Set param to End-Of-Input character
     movs    r1, #0                                      @ Set next char param to '\0'
     bl      add_input                                   @ Call C function to add char to input
-    @ bl      check_input
-    pop     {r4, r5, pc}                                @ Restore registers
+    b       finish_irq0
+irq_space:
+    ldr     r5, =#1
+    str     r5, [r4]
+    movs    r0, #2                                      @ Set param to End-Of-Input character
+    movs    r1, #0                                      @ Set next char param to '\0'
+    bl      add_input                                   @ Call C function to add char to input
+    bl      set_alarm_timing                            @ Enable the timer interrupt again
+finish_irq0:
+    pop     {r4-r6, pc}                                @ Restore registers
 
 @ GPIO interrupt service handler routine
 .thumb_func
