@@ -114,7 +114,6 @@ void arm_watchdog_update()
     watchdog_update();
 }
 
-
 // -------------------------------------- Letter Struct --------------------------------------
 
 /*
@@ -510,10 +509,14 @@ void add_input(int input_type)
     }
     case 2:
     {
-        // Space
-        current_input[current_input_length] = ' ';
-        printf(" ");
-        current_input_length++;
+        if (current_level > 2)
+        {
+
+            // Space
+            current_input[current_input_length] = ' ';
+            printf(" ");
+            current_input_length++;
+        }
         break;
     }
     case 3:
@@ -639,7 +642,6 @@ void set_red_led()
 void set_blue_led()
 {
     put_pixel(urgb_u32(0x0, 0x0, 0x3F));
-
 }
 
 // -------------------------------------- Game Logic --------------------------------------
@@ -718,7 +720,6 @@ void check_input()
             printf("Remaining: %d\n", remaining);
             printf("Lives: %d\n\n\n", lives);
             right_input++;
-
         }
         else
         {
@@ -731,7 +732,7 @@ void check_input()
             wrong_input++;
         }
     }
-    else if(current_level == 2)
+    else if (current_level == 2)
     {
         // Level 2
         if (strcmp(current_input, table[char_to_solve].code) == 0)
@@ -742,7 +743,6 @@ void check_input()
             printf("Remaining: %d\n", remaining);
             printf("Lives: %d\n\n\n", lives);
             right_input++;
-
         }
         else
         {
@@ -823,6 +823,7 @@ void reset_game()
     remaining = 5;
     wrong_input = 0;
     current_level = 0;
+    input_complete = 0;
     set_blue_led();
 }
 
@@ -832,7 +833,7 @@ void reset_game()
  */
 void start_game()
 {
-    //put_pixel(urgb_u32(0x00, 0x3F, 0x00)); // Set the RGB LED color to green
+    // put_pixel(urgb_u32(0x00, 0x3F, 0x00)); // Set the RGB LED color to green
 
     while (quit == 0)
     {
@@ -868,8 +869,8 @@ void start_game()
             level_4();
         } 
 
-        current_level = 0;
         reset_game();
+        clear_input();
     }
 
     printf("GOODBYE :(\n");
@@ -922,12 +923,15 @@ void game_finished()
     printf("\t* Enter .---- to play again *\n");
     printf("\t* Enter ..--- to exit       *\n");
     printf("\t*****************************\n\n\n");
-    main_asm();
+    // main_asm();
+    clear_input();
+    while (input_complete == 0)
+    {
+    }
     if (strcmp(current_input, ".----") == 0)
     {
-        start_game();
     }
-    if (strcmp(current_input, "..---") == 0)
+    else if (strcmp(current_input, "..---") == 0)
     {
         quit = 1;
     }
