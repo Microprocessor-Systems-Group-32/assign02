@@ -221,9 +221,7 @@ void morse_init()
  */
 int select_random(int low, int high)
 {
-    if (low > high)
-        return high;
-    return low + (rand() % (high - low + 1));
+    return rand() % (high - low + 1) + low;
 }
 
 /**
@@ -240,6 +238,7 @@ void level_1()
 
     while (remaining > 0 && lives > 0)
     {
+        srand(time(NULL));
         char_to_solve = select_random(0, 35);
         printf("-----------------------------------------\n");
         printf("|\tEnter %c = %s in Morse Code\t|\n", table[char_to_solve].letter, table[char_to_solve].code);
