@@ -29,7 +29,7 @@ int right_input = 0;
 int wrong_input = 0;
 int remaining = 5;
 
-char current_input[20];
+char current_input[100];
 int current_input_length = 0; // length of input sequence
 int char_to_solve = 0;        // The index (in the table) of the current character that the player needs to solve
 int input_complete = 0;
@@ -210,6 +210,82 @@ void morse_init()
     table[35].code = "----.";
 }
 
+
+// -------------------------------------- Word Struct --------------------------------------
+
+/*
+ * Initializes the morse code table for words in optional levels 3 & 4.
+ * The table contains 25 entries, each representing a lrandom word.
+ * Each entry consists of the word and its corresponding Morse code.
+ */
+#define TABLE_SIZE_WORD 25
+
+typedef struct wordMorse
+{
+    char *word;
+    char *code;
+} wordMorse;
+wordMorse wTable[TABLE_SIZE_WORD];
+
+void word_morse_init()
+{
+    // Initialize the table with random words for the questions
+    wTable[0].word = "justin";
+    wTable[1].word = "conor";
+    wTable[2].word = "hannah";
+    wTable[3].word = "surya";
+    wTable[4].word = "brian";
+    wTable[5].word = "apple";
+    wTable[6].word = "banana";
+    wTable[7].word = "shoe";
+    wTable[8].word = "hat";
+    wTable[9].word = "fish";
+    wTable[10].word = "bird";
+    wTable[11].word = "door";
+    wTable[12].word = "table";
+    wTable[13].word = "lamp";
+    wTable[14].word = "spoon";
+    wTable[15].word = "chair";
+    wTable[16].word = "sun";
+    wTable[17].word = "bicycle";
+    wTable[18].word = "ocean";
+    wTable[19].word = "compass";
+    wTable[20].word = "umbrella";
+    wTable[21].word = "volcano";
+    wTable[22].word = "computer";
+    wTable[23].word = "system";
+    wTable[24].word = "game";
+
+    // Initialize the Morse code for each letter or digit
+    wTable[0].code = ".--- ..- ... - .. -.";
+    wTable[1].code = "-.-. --- -. --- .-.";
+    wTable[2].code = ".... .- -. -. .- ....";
+    wTable[3].code = "... ..- .-. -.-- .-";
+    wTable[4].code = "-... .-. .. .- -.";
+    wTable[5].code = ".- .--. .--. .-.. .";
+    wTable[6].code = "-... .- -. .- -. .-";
+    wTable[7].code = "... .... --- .";
+    wTable[8].code = ".... .- -";
+    wTable[9].code = "..-. .. ... ....";
+    wTable[10].code = "-... .. .-. -..";
+    wTable[11].code = "-.. --- --- .-.";
+    wTable[12].code = "- .- -... .-.. .";
+    wTable[13].code = ".-.. .- -- .--.";
+    wTable[14].code = "... .--. --- --- -.";
+    wTable[15].code = "-.-. .... .- .. .-.";
+    wTable[16].code = "... ..- -.";
+    wTable[17].code = "-... .. -.-. -.-- -.-. .-.. .";
+    wTable[18].code = "--- -.-. . .- -.";
+    wTable[19].code = "-.-. --- -- .--. .- ... ...";
+    wTable[20].code = "..- -- -... .-. . .-.. .-.. .-";
+    wTable[21].code = "...- --- .-.. -.-. .- -. ---";
+    wTable[22].code = "-.-. --- -- .--. ..- - . .-.";
+    wTable[23].code = "... -.-- ... - . --";
+    wTable[24].code = "--. .- -- .";
+}
+
+
+
 // -------------------------------------- Select Level --------------------------------------
 
 /**
@@ -268,6 +344,12 @@ void level_1()
     game_finished();
 }
 
+/**
+ * Executes level 2 of the game.
+ * The player is presented with a series of Morse code challenges and must input the correct answers.
+ * The level continues until the player runs out of lives or answers 5 questions correctly in a row.
+ * At the end of the level, the outcome (win or lose) is displayed.
+ */
 void level_2()
 {
     printf("-----------\n");
@@ -288,7 +370,7 @@ void level_2()
         check_input();
     }
 
-    // At the end of Level 1, check if we finished due to running out of lives
+    // At the end of Level 2, check if we finished due to running out of lives
     // or due to getting 5 answers in a row correct
     if (lives == 0)
     {
@@ -304,6 +386,97 @@ void level_2()
     game_finished();
 }
 
+/**
+ * Executes level 3 of the game.
+ * The player is presented with a series of words (along woth morse values) as Morse code challenges and must input the correct answers.
+ * The level continues until the player runs out of lives or answers 5 questions correctly in a row.
+ * At the end of the level, the outcome (win or lose) is displayed.
+ */
+
+void level_3()
+{
+    printf("-----------\n");
+    printf("| Level 3 |\n");
+    printf("| Please enter a space between each letter of the word |\n");
+    printf("-----------\n\n");
+
+    while (remaining > 0 && lives > 0)
+    {
+        char_to_solve = select_random(0, 24);
+        printf("-----------------------------------------\n");
+        printf("|\tEnter %s = %s in Morse Code\t|\n", wTable[char_to_solve].word, wTable[char_to_solve].code);
+        printf("-----------------------------------------\n");
+        while (input_complete == 0)
+        {
+            // Empty while to stall the game until the timer interrupt fires
+        }
+        input_complete = 0;
+        check_input();
+    }
+
+    // At the end of Level 3, check if we finished due to running out of lives
+    // or due to getting 5 answers in a row correct
+    if (lives == 0)
+    {
+        // Ran out of lives
+        printf("YOU LOSE!!!\n");
+    }
+    else
+    {
+        // Completed 5 corret questions
+        printf("YOU WIN!!!\n");
+        wins++;
+    }
+    set_blue_led();
+    game_finished();
+}
+
+/**
+ * Executes level 4 of the game.
+ * The player is presented with a series of words as Morse code challenges and must input the correct answers.
+ * The level continues until the player runs out of lives or answers 5 questions correctly in a row.
+ * At the end of the level, the outcome (win or lose) is displayed.
+ */
+
+void level_4()
+{
+    printf("-----------\n");
+    printf("| Level 4 |\n");
+    printf("| Please enter a space between each letter of the word |\n");
+    printf("-----------\n\n");
+
+    while (remaining > 0 && lives > 0)
+    {
+        char_to_solve = select_random(0, 24);
+        printf("-----------------------------------------\n");
+        printf("|\tEnter %s in Morse Code\t|\n", wTable[char_to_solve].word);
+        printf("-----------------------------------------\n");
+        while (input_complete == 0)
+        {
+            // Empty while to stall the game until the timer interrupt fires
+        }
+        input_complete = 0;
+        check_input();
+    }
+
+    // At the end of Level 4, check if we finished due to running out of lives
+    // or due to getting 5 answers in a row correct
+    if (lives == 0)
+    {
+        // Ran out of lives
+        printf("YOU LOSE!!!\n");
+    }
+    else
+    {
+        // Completed 5 corret questions
+        printf("YOU WIN!!!\n");
+        wins++;
+    }
+    set_blue_led();
+    game_finished();
+}
+
+
 // -------------------------------------- Inputs --------------------------------------
 
 /**
@@ -314,7 +487,7 @@ void level_2()
  */
 void add_input(int input_type)
 {
-    if (current_input_length == 20)
+    if (current_input_length == 100)
         return;
 
     switch (input_type)
@@ -476,7 +649,7 @@ void set_blue_led()
  */
 void clear_input()
 {
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < 100; i++)
         current_input[i] = 0;
     current_input_length = 0;
 }
@@ -536,6 +709,7 @@ void check_input()
     }
     else if (current_level == 1)
     {
+        // Level 1
         if (strcmp(current_input, table[char_to_solve].code) == 0)
         {
             set_correct_led();
@@ -558,6 +732,7 @@ void check_input()
     }
     else if(current_level == 2)
     {
+        // Level 2
         if (strcmp(current_input, table[char_to_solve].code) == 0)
         {
             set_correct_led();
@@ -582,10 +757,49 @@ void check_input()
     else if (current_level == 3)
     {
         // Level 3
+        if (strcmp(current_input, wTable[char_to_solve].code) == 0)
+        {
+            set_correct_led();
+            remaining--;
+            printf("\nCORRECT!\n\n");
+            printf("Remaining: %d\n", remaining);
+            printf("Lives: %d\n\n\n", lives);
+            right_input++;
+
+        }
+        else
+        {
+            lives--;
+            set_correct_led();
+            printf("\nWRONG! :((\n\n");
+            printf("Remaining: %d\n", remaining);
+            printf("Lives: %d\n\n\n", lives);
+            wrong_input++;
+        }
     }
     else if (current_level == 4)
     {
         // Level 4
+        if (strcmp(current_input, wTable[char_to_solve].code) == 0)
+        {
+            set_correct_led();
+            remaining--;
+            printf("\nCORRECT!\n\n");
+            printf("Remaining: %d\n", remaining);
+            printf("Lives: %d\n\n\n", lives);
+            right_input++;
+
+        }
+        else
+        {
+            lives--;
+            set_correct_led();
+            printf("\nWRONG! :((\n\n");
+            printf("%s in Morse is: %s\n", wTable[char_to_solve].word, wTable[char_to_solve].code);
+            printf("Remaining: %d\n", remaining);
+            printf("Lives: %d\n\n\n", lives);
+            wrong_input++;
+        }
     }
     else
     {
@@ -643,10 +857,12 @@ void start_game()
         }
         else if (current_level == 3)
         {
-        } // level_3();
+            level_3();
+        } 
         else if (current_level == 4)
         {
-        } // level_4();
+            level_4();
+        } 
 
         current_level = 0;
         reset_game();
@@ -734,6 +950,7 @@ int main()
     // Initialise all STDIO as we will be using the GPIOs
     stdio_init_all();
     morse_init();
+    word_morse_init();
 
     // Initialise the PIO interface with the WS2812 code
     PIO pio = pio0;

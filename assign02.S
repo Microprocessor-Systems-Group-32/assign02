@@ -13,7 +13,7 @@
 
 .equ    DFLT_TIME, 0x0
 .equ    DFLT_ALARM_RUN, 0
-.equ    DFLT_ALARM_TIME, 1000000                        @ Specify the default alarm timeout
+.equ    DFLT_ALARM_TIME, 2000000                        @ Specify the default alarm timeout
 
 .equ    LONG_PRESS, 250000
 .equ    LONG_PRESS_SPACE, 1000000
