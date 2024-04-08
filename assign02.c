@@ -725,7 +725,8 @@ void check_input()
             lives--;
             set_correct_led();
             printf("\nWRONG! :((\n\n");
-            printf("Remaining: %d\n", remaining);
+            remaining = 5;
+            printf("Remaining back to: %d\n", remaining);
             printf("Lives: %d\n\n\n", lives);
             wrong_input++;
         }
@@ -749,7 +750,8 @@ void check_input()
             set_correct_led();
             printf("\nWRONG! :((\n\n");
             printf("%c in Morse is: %s\n", table[char_to_solve].letter, table[char_to_solve].code);
-            printf("Remaining: %d\n", remaining);
+            remaining = 5;
+            printf("Remaining back to: %d\n", remaining);
             printf("Lives: %d\n\n\n", lives);
             wrong_input++;
         }
@@ -772,7 +774,8 @@ void check_input()
             lives--;
             set_correct_led();
             printf("\nWRONG! :((\n\n");
-            printf("Remaining: %d\n", remaining);
+            remaining = 5;
+            printf("Remaining back to: %d\n", remaining);
             printf("Lives: %d\n\n\n", lives);
             wrong_input++;
         }
@@ -796,7 +799,8 @@ void check_input()
             set_correct_led();
             printf("\nWRONG! :((\n\n");
             printf("%s in Morse is: %s\n", wTable[char_to_solve].word, wTable[char_to_solve].code);
-            printf("Remaining: %d\n", remaining);
+            remaining = 5;
+            printf("Remaining back to: %d\n", remaining);
             printf("Lives: %d\n\n\n", lives);
             wrong_input++;
         }
