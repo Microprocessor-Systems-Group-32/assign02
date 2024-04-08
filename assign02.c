@@ -357,6 +357,7 @@ void level_2()
 
     while (remaining > 0 && lives > 0)
     {
+        srand(time(NULL));
         char_to_solve = select_random(0, 35);
         printf("---------------------------------\n");
         printf("|\tEnter %c in Morse Code\t|\n", table[char_to_solve].letter);
@@ -401,6 +402,7 @@ void level_3()
 
     while (remaining > 0 && lives > 0)
     {
+        srand(time(NULL));
         char_to_solve = select_random(0, 24);
         printf("-----------------------------------------\n");
         printf("|\tEnter %s = %s in Morse Code\t|\n", wTable[char_to_solve].word, wTable[char_to_solve].code);
@@ -446,6 +448,7 @@ void level_4()
 
     while (remaining > 0 && lives > 0)
     {
+        srand(time(NULL));
         char_to_solve = select_random(0, 24);
         printf("-----------------------------------------\n");
         printf("|\tEnter %s in Morse Code\t|\n", wTable[char_to_solve].word);
