@@ -231,7 +231,7 @@ void word_morse_init()
 {
     // Initialize the table with random words for the questions
     wTable[0].word = "justin";
-    wTable[1].word = "connor";
+    wTable[1].word = "conor";
     wTable[2].word = "hannah";
     wTable[3].word = "surya";
     wTable[4].word = "brian";
@@ -258,7 +258,7 @@ void word_morse_init()
 
     // Initialize the Morse code for each letter or digit
     wTable[0].code = ".--- ..- ... - .. -.";
-    wTable[1].code = "-.-. --- -. -. --- .-.";
+    wTable[1].code = "-.-. --- -. --- .-.";
     wTable[2].code = ".... .- -. -. .- ....";
     wTable[3].code = "... ..- .-. -.-- .-";
     wTable[4].code = "-... .-. .. .- -.";
