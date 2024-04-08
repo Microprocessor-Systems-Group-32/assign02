@@ -522,7 +522,15 @@ void add_input(int input_type)
     case 3:
     {
         // End Of Line (EOL)
-        current_input[current_input_length] = '\0';
+        if((current_level==3)||(current_level==4))
+        {
+            current_input[current_input_length-1] = '\0';
+        }
+        else
+        {
+            current_input[current_input_length] = '\0';
+        }
+        
         printf("\n");
         current_input_length++;
         input_complete = 1;
