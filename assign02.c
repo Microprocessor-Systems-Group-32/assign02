@@ -15,7 +15,12 @@
 
 // -------------------------------------- Global Variables --------------------------------------
 
-int initial_round = 1; // Use this to only print instructions once on initial rounde
+/**
+ * @file assign02.c
+ * @brief This file contains the variables used in the game.
+ */
+
+int initial_round = 1; // Use this to only print instructions once on initial round
 int current_level = 0; // 0 = Level select, 1 - 4 = level X
 int highest_level = 0;
 
@@ -481,12 +486,17 @@ void level_4()
 
 // -------------------------------------- Inputs --------------------------------------
 
+
 /**
- * @brief Takes input from the buffer and adds it to the current input string
+ * @brief Adds an input character to the current input based on the input type.
  *
- * @param input_type Specifies the input receives (0 = . | 1 = - | 2 = \s | 3 = EOL)
- * @param
+ * @param input_type The type of input character to add.
+ *                   0 - Dot
+ *                   1 - Dash
+ *                   2 - Space (only if current_level > 2)
+ *                   3 - End Of Line (EOL)
  */
+ 
 void add_input(int input_type)
 {
     if (current_input_length == 100)

@@ -11,12 +11,12 @@
 
 @ Define constants
 
-.equ    DFLT_TIME, 0x0
-.equ    DFLT_ALARM_RUN, 0
+.equ    DFLT_TIME, 0x0                                  @ Specify the default time
+.equ    DFLT_ALARM_RUN, 0                               @ Specify the default alarm run state
 .equ    DFLT_ALARM_TIME, 2000000                        @ Specify the default alarm timeout
 
-.equ    LONG_PRESS, 250000
-.equ    LONG_PRESS_SPACE, 1000000
+.equ    LONG_PRESS, 2500000                             @ Specify the long press time
+.equ    LONG_PRESS_SPACE, 1000000                       @ Specify the long press space time
 
 .equ    GPIO_BTN_MSK_RISE, 0x00800000                   @ Bit-21 for falling-edge event on GP21
 .equ    GPIO_BTN_MSK_FALL, 0x00400000                   @ Bit-20 for rising-edge event on GP21
@@ -100,23 +100,23 @@ enable_interrupt:
 @ Timer interrupt service handler routine
 .thumb_func
 irq_0_isr:
-    push    {r4-r6, lr}                                @ Restore registers
+    push    {r4-r6, lr}                                 @ Restore registers
     ldr     r4, =(TIMER_BASE + TIMER_INTR_OFFSET)       @ Load address of TIMER raw interrupts register
     ldr     r5, =0x1                                    @ Load appropriate value to write TIMER0 bit
     str     r5, [r4]                                    @ Acknowledge interrupt as handled (by writing the TIMER0 bit)
     ldr     r4, =lalarmRun                              @ Load alarm bool address
-    ldr     r5, [r4]
-    cmp     r5, #1
-    bne     irq_space
-    ldr     r5, =#0
-    str     r5, [r4]
+    ldr     r5, [r4]                                    @ Load alarm bool
+    cmp     r5, #1                                      @ Check if alarm is running
+    bne     irq_space                                   @ If not, return
+    ldr     r5, =#0                                     @ Set alarm bool to false
+    str     r5, [r4]                                    @ Store the alarm bool
     movs    r0, #3                                      @ Set param to End-Of-Input character
     movs    r1, #0                                      @ Set next char param to '\0'
     bl      add_input                                   @ Call C function to add char to input
     b       finish_irq0
 irq_space:
-    ldr     r5, =#1
-    str     r5, [r4]
+    ldr     r5, =#1                                     @ Set alarm bool to true
+    str     r5, [r4]                                    @ Store the alarm bool
     movs    r0, #2                                      @ Set param to End-Of-Input character
     movs    r1, #0                                      @ Set next char param to '\0'
     bl      add_input                                   @ Call C function to add char to input
@@ -127,8 +127,8 @@ finish_irq0:
 @ GPIO interrupt service handler routine
 .thumb_func
 gpio_isr:
-    push    {lr}
-    bl      arm_watchdog_update
+    push    {lr}                                        @ Preserve LR
+    bl      arm_watchdog_update                         @ Call subroutine to update the watchdog
     ldr     r4, =(IO_BANK0_BASE + IO_BANK0_INTR2_OFFSET) @ Load INTR2 register address
     ldr     r5, =GPIO_BTN_MSK_FALL                      @ Load value to write to GPIO 21 bit 
     ldr     r6, [r4]                                    @ Load the INTR2 register
@@ -156,22 +156,22 @@ rise_edge:
     ldr     r6, =ltimeDiff                              @ Load the address of the timer var
     str     r5, [r6]                                    @ Store the current time in the var
     subs    r0, r5, r4                                  @ diff = currClickTime - lastClickTime
-    ldr     r1, =LONG_PRESS
-    cmp     r0, r1
-    blt     dot
-    movs    r0, #1
-    movs    r1, #0
-    bl      add_input
-    b       gpio_isr_clear
+    ldr     r1, =LONG_PRESS                             @ Load the long press time
+    cmp     r0, r1                                      @ Compare the difference with the long press time
+    blt     dot                                         @ If less than long press time, it's a dot   
+    movs    r0, #1                                      @ Set param to End-Of-Input character 
+    movs    r1, #0                                      @ Set next char param to '\0'
+    bl      add_input                                   @ Call C function to add char to input
+    b       gpio_isr_clear                              @ Continue
 dot:
-    movs    r0, #0
-    movs    r1, #0
-    bl      add_input
+    movs    r0, #0                                      @ Set param to '.' character 
+    movs    r1, #0                                      @ Set next char param to '\0'
+    bl      add_input                                   @ Call C function to add char to input
 gpio_isr_clear:
-    ldr     r5, =lalarmRun
-    ldr     r6, =#0
-    str     r6, [r5]
-    bl      set_alarm_timing
+    ldr     r5, =lalarmRun                              @ Load the address of the alarm bool
+    ldr     r6, =#0                                     @ Load the value to write to the alarm bool
+    str     r6, [r5]                                    @ Clear the alarm bool
+    bl      set_alarm_timing                            @ Call subroutine to set the alarm timing
     ldr     r4, =(IO_BANK0_BASE + IO_BANK0_INTR2_OFFSET) @ Load INTR2 register address
     str     r7, [r4]                                    @ Clear pending GPIO 21 request
     pop     {pc}                                        @ Restore register
