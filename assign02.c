@@ -774,6 +774,19 @@ void check_input()
             lives--;
             set_correct_led();
             printf("\nWRONG! :((\n\n");
+            int present = 0;
+            int i;
+            for(i = 0; i<36; i++){
+                if (strcmp(current_input, table[i].code) == 0)
+                {
+                    printf("Inputted Values is: %c\n", table[i].letter);
+                    present = 1;
+                }
+            }
+            if(present != 1){
+                printf("Inputted Values is: ?\n");
+            }
+            
             remaining = 5;
             printf("Remaining back to: %d\n", remaining);
             printf("Lives: %d\n\n\n", lives);
@@ -797,6 +810,19 @@ void check_input()
             lives--;
             set_correct_led();
             printf("\nWRONG! :((\n\n");
+            int present = 0;
+            int i;
+            for(i = 0; i<36; i++){
+                if (strcmp(current_input, table[i].code) == 0)
+                {
+                    printf("Inputted Values is: %c\n", table[i].letter);
+                    present = 1;
+                }
+            }
+            if(present != 1){
+                printf("Inputted Values is: ?\n");
+            }
+            
             printf("%c in Morse is: %s\n", table[char_to_solve].letter, table[char_to_solve].code);
             remaining = 5;
             printf("Remaining back to: %d\n", remaining);
@@ -821,6 +847,40 @@ void check_input()
             lives--;
             set_correct_led();
             printf("\nWRONG! :((\n\n");
+            char delm[2]=" ";
+            char *token;
+            token = strtok(current_input, delm);
+            int wrong = 0;
+            printf("Inputted Value is: ");
+
+            while(token != NULL)
+            {
+                int present = 0;
+                
+                int i;
+                for(i = 0; i<36; i++){
+                    if (strcmp(token, table[i].code) == 0)
+                    {
+                        //strcat(tempVal, table[i].letter);
+                        printf("%c", table[i].letter);
+                        //printf("Inputted Values is: %c\n", table[i].letter);
+                        present = 1;
+                    }
+                }
+                if(present != 1){
+                    wrong = 1;
+                }
+
+                token = strtok(NULL, delm);
+            }
+            
+            if(wrong == 1){
+                printf("?\n");
+            }
+            else{
+                printf("\n");
+            }
+            
             remaining = 5;
             printf("Remaining back to: %d\n", remaining);
             printf("Lives: %d\n\n\n", lives);
@@ -844,6 +904,40 @@ void check_input()
             lives--;
             set_correct_led();
             printf("\nWRONG! :((\n\n");
+            char delm[2]=" ";
+            char *token;
+            token = strtok(current_input, delm);
+            int wrong = 0;
+            printf("Inputted Value is: ");
+
+            while(token != NULL)
+            {
+                int present = 0;
+                
+                int i;
+                for(i = 0; i<36; i++){
+                    if (strcmp(token, table[i].code) == 0)
+                    {
+                        //strcat(tempVal, table[i].letter);
+                        printf("%c", table[i].letter);
+                        //printf("Inputted Values is: %c\n", table[i].letter);
+                        present = 1;
+                    }
+                }
+                if(present != 1){
+                    wrong = 1;
+                }
+
+                token = strtok(NULL, delm);
+            }
+            
+            if(wrong == 1){
+                printf("?\n");
+            }
+            else{
+                printf("\n");
+            }
+            
             printf("%s in Morse is: %s\n", wTable[char_to_solve].word, wTable[char_to_solve].code);
             remaining = 5;
             printf("Remaining back to: %d\n", remaining);
