@@ -86,61 +86,6 @@ static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b)
            (uint32_t)(b);
 }
 
-// -------------------------------------- LED --------------------------------------
-
-/**
- * @brief Sets the correct LED color based on the current level and number of lives.
- * If the current level is not 0, the LED color is determined by the number of lives:
- * - 3 lives: Green
- * - 2 lives: Yellow
- * - 1 life: Red
- * If the current level is 0, the LED color is set to Blue.
- */
-void set_correct_led()
-{
-    if (current_level != 0)
-    {
-        switch (lives)
-        {
-        case 3:
-            // Set Green
-            put_pixel(urgb_u32(0x0, 0x3F, 0x0));
-            break;
-        case 2:
-            // Set Yellow
-            put_pixel(urgb_u32(0x3F, 0x3F, 0x0));
-            break;
-        case 1:
-            // Set Red
-            put_pixel(urgb_u32(0x3F, 0x0, 0x0));
-            break;
-        default:
-            break;
-        }
-    }
-    else
-    {
-        // Set Blue
-        put_pixel(urgb_u32(0x0, 0x0, 0x3F));
-    }
-}
-
-/**
- * @brief Sets the LED color to Red.
- */
-void set_red_led()
-{
-    put_pixel(urgb_u32(0x3F, 0x0, 0x0));
-}
-
-/**
- * @brief Sets the LED color to Blue.
- */
-void set_blue_led()
-{
-    put_pixel(urgb_u32(0x0, 0x0, 0x3F));
-}
-
 // ------------------------------ Declare Main Assembly Entry Before use ------------------------------
 
 /**
@@ -411,235 +356,6 @@ void word_morse_init()
 int select_random(int low, int high)
 {
     return rand() % (high - low + 1) + low;
-}
-
-/**
- * @brief Clears the current input, making it ready for a new round
- */
-void clear_input()
-{
-    for (int i = 0; i < 100; i++)
-        current_input[i] = 0;
-    current_input_length = 0;
-}
-
-/**
- * @brief A function called upon in start the game function that
- * calculates your overall accuracy throughout the game by
- * summing your total attempts over the total correct attempts.
- */
-void calculate_stats(int reset)
-{
-    printf("\n\n********************* STATS *********************");
-    printf("\n*\t\t\t\t\t\t*");
-    printf("\n*\tAttempts: \t\t\t%d\t*", right_input + wrong_input);
-    printf("\n*\tCorrect: \t\t\t%d\t*", right_input);
-    printf("\n*\tIncorrect: \t\t\t%d\t*", wrong_input);
-    printf("\n*\tAccuracy: \t\t\t%.2f%%\t*", (float)right_input / (right_input + wrong_input) * 100);
-    printf("\n*\tWin Streak: \t\t\t%d\t*", wins);
-    printf("\n*\tLives Left: \t\t\t%d\t*", lives);
-    if (right_input != 0 || wrong_input != 0)
-    {
-        float stat = right_input / (right_input + wrong_input) * 100;
-        if (reset)
-        {
-            right_input = 0;
-            wrong_input = 0;
-            printf("\n*\tCorrect %% for this level: \t%.2f%%\t*", stat);
-        }
-        else
-        {
-            printf("\n*\tCorrect Percent :\t\t\t%.2f%%\t*", stat);
-        }
-    }
-    printf("\n*\t\t\t\t\t\t*");
-    printf("\n*************************************************\n\n");
-}
-
-/**
- * @brief Function to handle game completion.
- * Calculates game statistics, displays game over message, and prompts for replay or exit.
- */
-void game_finished()
-{
-    calculate_stats(1);
-    if (lives == 0)
-        set_red_led();
-    printf("\n\n\n\n\n\n\t*****************************\n");
-    printf("\t*                           *\n");
-    printf("\t* Enter .---- to play again *\n");
-    printf("\t* Enter ..--- to exit       *\n");
-    printf("\t*****************************\n\n\n");
-    clear_input();
-    while (input_complete == 0)
-    {
-    }
-    if (strcmp(current_input, ".----") == 0)
-    {
-    }
-    else if (strcmp(current_input, "..---") == 0)
-    {
-        quit = 1;
-    }
-    else
-    {
-        printf("Error: Invalid input.");
-    }
-}
-
-/**
- * @brief Handles the level select, based on the current input
- */
-void select_difficulty()
-{
-    if (strcmp(current_input, ".----") == 0)
-    {
-        current_level = 1;
-        // Turns Green to signify game in progress
-        set_correct_led();
-        // level_1();
-        return;
-    }
-    else if (strcmp(current_input, "..---") == 0)
-    {
-        current_level = 2;
-        set_correct_led();
-        return;
-    }
-    else if (strcmp(current_input, "...--") == 0)
-    {
-        current_level = 3;
-        set_correct_led();
-        return;
-    }
-    else if (strcmp(current_input, "....-") == 0)
-    {
-        current_level = 4;
-        set_correct_led();
-        return;
-    }
-    else if (strcmp(current_input, ".....") == 0)
-    {
-        quit = 1;
-        return;
-    }
-    else
-    {
-        printf("Error: Invalid input.");
-        return;
-    }
-}
-
-/**
- * @brief Based on the current level, check if the input is valid and progress as necessary
- */
-void check_input()
-{
-    // Handle for level select
-    if (current_level == 0)
-    {
-        select_difficulty();
-    }
-    else if (current_level == 1)
-    {
-        // Level 1
-        if (strcmp(current_input, table[char_to_solve].code) == 0)
-        {
-            set_correct_led();
-            remaining--;
-            printf("\nCORRECT!\n\n");
-            printf("Remaining: %d\n", remaining);
-            printf("Lives: %d\n\n\n", lives);
-            right_input++;
-        }
-        else
-        {
-            lives--;
-            set_correct_led();
-            printf("\nWRONG! :((\n\n");
-            remaining = 5;
-            printf("Remaining back to: %d\n", remaining);
-            printf("Lives: %d\n\n\n", lives);
-            wrong_input++;
-        }
-    }
-    else if (current_level == 2)
-    {
-        // Level 2
-        if (strcmp(current_input, table[char_to_solve].code) == 0)
-        {
-            set_correct_led();
-            remaining--;
-            printf("\nCORRECT!\n\n");
-            printf("Remaining: %d\n", remaining);
-            printf("Lives: %d\n\n\n", lives);
-            right_input++;
-        }
-        else
-        {
-            lives--;
-            set_correct_led();
-            printf("\nWRONG! :((\n\n");
-            printf("%c in Morse is: %s\n", table[char_to_solve].letter, table[char_to_solve].code);
-            remaining = 5;
-            printf("Remaining back to: %d\n", remaining);
-            printf("Lives: %d\n\n\n", lives);
-            wrong_input++;
-        }
-    }
-    else if (current_level == 3)
-    {
-        // Level 3
-        if (strcmp(current_input, wTable[char_to_solve].code) == 0)
-        {
-            set_correct_led();
-            remaining--;
-            printf("\nCORRECT!\n\n");
-            printf("Remaining: %d\n", remaining);
-            printf("Lives: %d\n\n\n", lives);
-            right_input++;
-        }
-        else
-        {
-            lives--;
-            set_correct_led();
-            printf("\nWRONG! :((\n\n");
-            remaining = 5;
-            printf("Remaining back to: %d\n", remaining);
-            printf("Lives: %d\n\n\n", lives);
-            wrong_input++;
-        }
-    }
-    else if (current_level == 4)
-    {
-        // Level 4
-        if (strcmp(current_input, wTable[char_to_solve].code) == 0)
-        {
-            set_correct_led();
-            remaining--;
-            printf("\nCORRECT!\n\n");
-            printf("Remaining: %d\n", remaining);
-            printf("Lives: %d\n\n\n", lives);
-            right_input++;
-        }
-        else
-        {
-            lives--;
-            set_correct_led();
-            printf("\nWRONG! :((\n\n");
-            printf("%s in Morse is: %s\n", wTable[char_to_solve].word, wTable[char_to_solve].code);
-            remaining = 5;
-            printf("Remaining back to: %d\n", remaining);
-            printf("Lives: %d\n\n\n", lives);
-            wrong_input++;
-        }
-    }
-    else
-    {
-        printf("ERROR");
-    }
-
-    clear_input();
 }
 
 /**
@@ -950,7 +666,227 @@ void difficulty_level_inputs()
     printf("\t*****************************\n");
 }
 
+// -------------------------------------- LED --------------------------------------
+
+/**
+ * @brief Sets the correct LED color based on the current level and number of lives.
+ * If the current level is not 0, the LED color is determined by the number of lives:
+ * - 3 lives: Green
+ * - 2 lives: Yellow
+ * - 1 life: Red
+ * If the current level is 0, the LED color is set to Blue.
+ */
+void set_correct_led()
+{
+    if (current_level != 0)
+    {
+        switch (lives)
+        {
+        case 3:
+            // Set Green
+            put_pixel(urgb_u32(0x0, 0x3F, 0x0));
+            break;
+        case 2:
+            // Set Yellow
+            put_pixel(urgb_u32(0x3F, 0x3F, 0x0));
+            break;
+        case 1:
+            // Set Red
+            put_pixel(urgb_u32(0x3F, 0x0, 0x0));
+            break;
+        default:
+            break;
+        }
+    }
+    else
+    {
+        // Set Blue
+        put_pixel(urgb_u32(0x0, 0x0, 0x3F));
+    }
+}
+
+/**
+ * @brief Sets the LED color to Red.
+ */
+void set_red_led()
+{
+    put_pixel(urgb_u32(0x3F, 0x0, 0x0));
+}
+
+/**
+ * @brief Sets the LED color to Blue.
+ */
+void set_blue_led()
+{
+    put_pixel(urgb_u32(0x0, 0x0, 0x3F));
+}
+
 // -------------------------------------- Game Logic --------------------------------------
+
+/**
+ * @brief Clears the current input, making it ready for a new round
+ */
+void clear_input()
+{
+    for (int i = 0; i < 100; i++)
+        current_input[i] = 0;
+    current_input_length = 0;
+}
+
+/**
+ * @brief Handles the level select, based on the current input
+ */
+void select_difficulty()
+{
+    if (strcmp(current_input, ".----") == 0)
+    {
+        current_level = 1;
+        // Turns Green to signify game in progress
+        set_correct_led();
+        // level_1();
+        return;
+    }
+    else if (strcmp(current_input, "..---") == 0)
+    {
+        current_level = 2;
+        set_correct_led();
+        return;
+    }
+    else if (strcmp(current_input, "...--") == 0)
+    {
+        current_level = 3;
+        set_correct_led();
+        return;
+    }
+    else if (strcmp(current_input, "....-") == 0)
+    {
+        current_level = 4;
+        set_correct_led();
+        return;
+    }
+    else if (strcmp(current_input, ".....") == 0)
+    {
+        quit = 1;
+        return;
+    }
+    else
+    {
+        printf("Error: Invalid input.");
+        return;
+    }
+}
+
+/**
+ * @brief Based on the current level, check if the input is valid and progress as necessary
+ */
+void check_input()
+{
+    // Handle for level select
+    if (current_level == 0)
+    {
+        select_difficulty();
+    }
+    else if (current_level == 1)
+    {
+        // Level 1
+        if (strcmp(current_input, table[char_to_solve].code) == 0)
+        {
+            set_correct_led();
+            remaining--;
+            printf("\nCORRECT!\n\n");
+            printf("Remaining: %d\n", remaining);
+            printf("Lives: %d\n\n\n", lives);
+            right_input++;
+        }
+        else
+        {
+            lives--;
+            set_correct_led();
+            printf("\nWRONG! :((\n\n");
+            remaining = 5;
+            printf("Remaining back to: %d\n", remaining);
+            printf("Lives: %d\n\n\n", lives);
+            wrong_input++;
+        }
+    }
+    else if (current_level == 2)
+    {
+        // Level 2
+        if (strcmp(current_input, table[char_to_solve].code) == 0)
+        {
+            set_correct_led();
+            remaining--;
+            printf("\nCORRECT!\n\n");
+            printf("Remaining: %d\n", remaining);
+            printf("Lives: %d\n\n\n", lives);
+            right_input++;
+        }
+        else
+        {
+            lives--;
+            set_correct_led();
+            printf("\nWRONG! :((\n\n");
+            printf("%c in Morse is: %s\n", table[char_to_solve].letter, table[char_to_solve].code);
+            remaining = 5;
+            printf("Remaining back to: %d\n", remaining);
+            printf("Lives: %d\n\n\n", lives);
+            wrong_input++;
+        }
+    }
+    else if (current_level == 3)
+    {
+        // Level 3
+        if (strcmp(current_input, wTable[char_to_solve].code) == 0)
+        {
+            set_correct_led();
+            remaining--;
+            printf("\nCORRECT!\n\n");
+            printf("Remaining: %d\n", remaining);
+            printf("Lives: %d\n\n\n", lives);
+            right_input++;
+        }
+        else
+        {
+            lives--;
+            set_correct_led();
+            printf("\nWRONG! :((\n\n");
+            remaining = 5;
+            printf("Remaining back to: %d\n", remaining);
+            printf("Lives: %d\n\n\n", lives);
+            wrong_input++;
+        }
+    }
+    else if (current_level == 4)
+    {
+        // Level 4
+        if (strcmp(current_input, wTable[char_to_solve].code) == 0)
+        {
+            set_correct_led();
+            remaining--;
+            printf("\nCORRECT!\n\n");
+            printf("Remaining: %d\n", remaining);
+            printf("Lives: %d\n\n\n", lives);
+            right_input++;
+        }
+        else
+        {
+            lives--;
+            set_correct_led();
+            printf("\nWRONG! :((\n\n");
+            printf("%s in Morse is: %s\n", wTable[char_to_solve].word, wTable[char_to_solve].code);
+            remaining = 5;
+            printf("Remaining back to: %d\n", remaining);
+            printf("Lives: %d\n\n\n", lives);
+            wrong_input++;
+        }
+    }
+    else
+    {
+        printf("ERROR");
+    }
+
+    clear_input();
+}
 
 /**
  * @brief Resets the game for a new round
@@ -1013,6 +949,70 @@ void start_game()
     }
 
     printf("GOODBYE :(\n");
+}
+
+/**
+ * @brief A function called upon in start the game function that
+ * calculates your overall accuracy throughout the game by
+ * summing your total attempts over the total correct attempts.
+ */
+void calculate_stats(int reset)
+{
+    printf("\n\n********************* STATS *********************");
+    printf("\n*\t\t\t\t\t\t*");
+    printf("\n*\tAttempts: \t\t\t%d\t*", right_input + wrong_input);
+    printf("\n*\tCorrect: \t\t\t%d\t*", right_input);
+    printf("\n*\tIncorrect: \t\t\t%d\t*", wrong_input);
+    printf("\n*\tAccuracy: \t\t\t%.2f%%\t*", (float)right_input / (right_input + wrong_input) * 100);
+    printf("\n*\tWin Streak: \t\t\t%d\t*", wins);
+    printf("\n*\tLives Left: \t\t\t%d\t*", lives);
+    if (right_input != 0 || wrong_input != 0)
+    {
+        float stat = right_input / (right_input + wrong_input) * 100;
+        if (reset)
+        {
+            right_input = 0;
+            wrong_input = 0;
+            printf("\n*\tCorrect %% for this level: \t%.2f%%\t*", stat);
+        }
+        else
+        {
+            printf("\n*\tCorrect Percent :\t\t\t%.2f%%\t*", stat);
+        }
+    }
+    printf("\n*\t\t\t\t\t\t*");
+    printf("\n*************************************************\n\n");
+}
+
+/**
+ * @brief Function to handle game completion.
+ * Calculates game statistics, displays game over message, and prompts for replay or exit.
+ */
+void game_finished()
+{
+    calculate_stats(1);
+    if (lives == 0)
+        set_red_led();
+    printf("\n\n\n\n\n\n\t*****************************\n");
+    printf("\t*                           *\n");
+    printf("\t* Enter .---- to play again *\n");
+    printf("\t* Enter ..--- to exit       *\n");
+    printf("\t*****************************\n\n\n");
+    clear_input();
+    while (input_complete == 0)
+    {
+    }
+    if (strcmp(current_input, ".----") == 0)
+    {
+    }
+    else if (strcmp(current_input, "..---") == 0)
+    {
+        quit = 1;
+    }
+    else
+    {
+        printf("Error: Invalid input.");
+    }
 }
 
 // -------------------------------------- Main --------------------------------------
