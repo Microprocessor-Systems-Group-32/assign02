@@ -823,6 +823,10 @@ void check_input()
             remaining--;
             printf("\nCORRECT!\n\n");
             printf("Remaining: %d\n", remaining);
+            if(lives<3){
+                printf("Lives Incremented\n");
+                lives++;
+            }
             printf("Lives: %d\n\n\n", lives);
             right_input++;
         }
@@ -859,6 +863,10 @@ void check_input()
             remaining--;
             printf("\nCORRECT!\n\n");
             printf("Remaining: %d\n", remaining);
+            if(lives<3){
+                printf("Lives Incremented\n");
+                lives++;
+            }
             printf("Lives: %d\n\n\n", lives);
             right_input++;
         }
@@ -896,6 +904,10 @@ void check_input()
             remaining--;
             printf("\nCORRECT!\n\n");
             printf("Remaining: %d\n", remaining);
+            if(lives<3){
+                printf("Lives Incremented\n");
+                lives++;
+            }
             printf("Lives: %d\n\n\n", lives);
             right_input++;
         }
@@ -953,6 +965,10 @@ void check_input()
             remaining--;
             printf("\nCORRECT!\n\n");
             printf("Remaining: %d\n", remaining);
+            if(lives<3){
+                printf("Lives Incremented\n");
+                lives++;
+            }
             printf("Lives: %d\n\n\n", lives);
             right_input++;
         }
