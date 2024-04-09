@@ -10,7 +10,6 @@
 .align 4                                                        @ Specify code alignment
 
 @ Define constants
-
 .equ    DFLT_TIME, 0x0                                  @ Specify the default time
 .equ    DFLT_ALARM_RUN, 0                               @ Specify the default alarm run state
 .equ    DFLT_ALARM_TIME, 1000000                        @ Specify the default alarm timeout
@@ -38,6 +37,7 @@ main_asm:
     bl      set_alarm_timing                            @ Call subroutine to set alarm delay
     pop     {pc}
 
+@ Initialise the GPIO 21 pin
 init_gpio_buttons:
     push    {r0, r1, lr}                                @ Preserve registers
     movs    r0, #GPIO_BTN_PIN                           @ This value is the GPIO button 21 pin on the PI PICO board
@@ -80,7 +80,6 @@ set_alarm_timing:
     ldr     r5, [r5]                                    @ Load the timing delay
     add     r4, r4, r5                                  @ Add delays together
     ldr     r5, =(TIMER_BASE + TIMER_ALARM0_OFFSET)     @ Get ALARM0 control register    
-    @ ldr     r4, =DFLT_ALARM_TIME
     str     r4, [r5]                                    @ Store new delay
     ldr     r4, =0x1                                    @ Set appropriate value to enable timer (entry 0)
     ldr     r5, =(TIMER_BASE + TIMER_INTE_OFFSET)       @ Load INTE register address
@@ -176,6 +175,7 @@ gpio_isr_clear:
     ldr     r4, =(IO_BANK0_BASE + IO_BANK0_INTR2_OFFSET) @ Load INTR2 register address
     str     r7, [r4]                                    @ Clear pending GPIO 21 request
     pop     {pc}                                        @ Restore register
+
 @ Set data alignment
 .align 4
 

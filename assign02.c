@@ -9,35 +9,49 @@
 #include "hardware/watchdog.h"
 #include "ws2812.pio.h"
 
-#define IS_RGBW true  // Will use RGBW format
-#define NUM_PIXELS 1  // There is 1 WS2812 device in the chain
-#define WS2812_PIN 28 // The GPIO pin that the WS2812 connected to
+/*!
+  \def IS_RGBW
+  Specifies whether to use the RGBW format
+*/
+#define IS_RGBW true
 
-// -------------------------------------- Global Variables --------------------------------------
+/*!
+  \def NUM_PIXELS
+  Specifies the number of WS2812 devices on the chain
+*/
+#define NUM_PIXELS 1 // There is 1 WS2812 device in the chain
+
+/*!
+  \def WS2812_PIN
+  Specifies the GPIO pin that the WS2812 is connected to
+*/
+#define WS2812_PIN 28
 
 /**
  * @file assign02.c
- * @brief This file contains the variables used in the game.
+ * @brief This file contains the vast majority of the game logic. It does not include interrupts code or
+ * Morse code character buffer code
  */
 
-int initial_round = 1; // Use this to only print instructions once on initial round
-int current_level = 0; // 0 = Level select, 1 - 4 = level X
-int highest_level = 0;
+// -------------------------------------- Global Variables --------------------------------------
 
-int quit = 0;
+int initial_round = 1; /*!< Used to only print instructions once on initial round */
+int current_level = 0; /*!< 0 = Level select, 1 - 4 = level X */
 
-int lives = 3;
+int quit = 0; /*!< 0 - Continue playing, 1 - quit the game at the next opportunity */
 
-int wins = 0;
-int total_correct_answers = 0;
-int right_input = 0;
-int wrong_input = 0;
-int remaining = 5;
+int lives = 3; /*!< The number of lives the player currently has */
 
-char current_input[100];
-int current_input_length = 0; // length of input sequence
-int char_to_solve = 0;        // The index (in the table) of the current character that the player needs to solve
-int input_complete = 0;
+int wins = 0;                  /*!< The number of wins (of levels) a player has */
+int total_correct_answers = 0; /*!< The total number of correct answers a player has accross all games */
+int right_input = 0;           /*!< The number of correct ansers in a specific game */
+int wrong_input = 0;           /*!< The number of incorrect ansers in a specific game */
+int remaining = 5;             /*!< The number of questions a player must get right to progress */
+
+char current_input[100];      /*!< String of the current input from the buffer */
+int current_input_length = 0; /*!< The length of the current input string */
+int char_to_solve = 0;        /*!< The index of the character/word the player is currently trying to solve in the table */
+int input_complete = 0;       /*!< 0 - Incomplete, 1 - Complete */
 
 // -------------------------------------- WS2812 RGB LED --------------------------------------
 
@@ -74,35 +88,58 @@ static inline uint32_t urgb_u32(uint8_t r, uint8_t g, uint8_t b)
 
 // ------------------------------ Declare Main Assembly Entry Before use ------------------------------
 
+/**
+ * @brief Define the main entrypoint into ARM Assembly
+ */
 void main_asm();
 
 // -------------------------------------- GPIO Pin Initialisation --------------------------------------
 
-// Initialise GPIO pin
+/**
+ * @brief Initialise GPIO pin
+ *
+ * @param pin Pin of the GPIO to initialise
+ */
 void asm_gpio_init(uint pin)
 {
     gpio_init(pin);
 }
 
-// Set direction of a GPIO pin
+/**
+ * @brief Set the direction of a GPIO pin
+ *
+ * @param pin Pin of the GPIO direction to set
+ */
 void asm_gpio_set_dir(uint pin, bool out)
 {
     gpio_set_dir(pin, out);
 }
 
-// Get the value of a GPIO pin
+/**
+ * @brief Get the value of a GPIO pin
+ *
+ * @param pin Pin of the GPIO value to get
+ */
 bool asm_gpio_get(uint pin)
 {
     return gpio_get(pin);
 }
 
-// Set the value of a GPIO pin
+/**
+ * @brief Set the value of a GPIO pin
+ *
+ * @param pin Pin of the GPIO value to set
+ */
 void asm_gpio_put(uint pin, bool value)
 {
     gpio_put(pin, value);
 }
 
-// Set the IRQ of a GPIO pin
+/**
+ * @brief Set the IRQ of a GPIO pin
+ *
+ * @param pin Pin of the GPIO IRQ to set
+ */
 void asm_gpio_set_irq(uint pin)
 {
     gpio_set_irq_enabled(pin, GPIO_IRQ_EDGE_FALL, true);
@@ -126,15 +163,25 @@ void arm_watchdog_update()
  * The table contains 36 entries, each representing a letter or a digit.
  * Each entry consists of a letter or a digit and its corresponding Morse code.
  */
+
+/**
+ * @def TABLE_SIZE
+ * The size to initialise the table array
+ */
 #define TABLE_SIZE 36
 
+/** Struct defining the structure of a morse code character and its transliteration */
 typedef struct morse
 {
     char letter;
     char *code;
 } morse;
-morse table[TABLE_SIZE];
 
+morse table[TABLE_SIZE]; /*!< Initialise global morse code character table */
+
+/**
+ * @brief Initialises a morse code character table
+ */
 void morse_init()
 {
     // Initialize the table with letters A-Z and digits 0-9
@@ -221,15 +268,25 @@ void morse_init()
  * The table contains 25 entries, each representing a lrandom word.
  * Each entry consists of the word and its corresponding Morse code.
  */
+
+/**
+ * @def TABLE_SIZE_WORD
+ * The size to initialise the table of words array
+ */
 #define TABLE_SIZE_WORD 25
 
+/** Struct defining the structure of a morse code word and its transliteration */
 typedef struct wordMorse
 {
     char *word;
     char *code;
 } wordMorse;
-wordMorse wTable[TABLE_SIZE_WORD];
 
+wordMorse wTable[TABLE_SIZE_WORD]; /*!< Initialise global morse code word table */
+
+/**
+ * @brief Initialises a morse code words table for use in Levels 3 and 4
+ */
 void word_morse_init()
 {
     // Initialize the table with random words for the questions
@@ -290,7 +347,7 @@ void word_morse_init()
 // -------------------------------------- Select Level --------------------------------------
 
 /**
- * Generates a random integer between the given low and high values (inclusive).
+ * @brief Generates a random integer between the given low and high values (inclusive).
  *
  * @param low The lower bound of the range.
  * @param high The upper bound of the range.
@@ -302,7 +359,7 @@ int select_random(int low, int high)
 }
 
 /**
- * Executes level 1 of the game.
+ * @brief Executes level 1 of the game.
  * The player is presented with a series of Morse code challenges and must input the correct answers.
  * The level continues until the player runs out of lives or answers 5 questions correctly in a row.
  * At the end of the level, the outcome (win or lose) is displayed.
@@ -346,7 +403,7 @@ void level_1()
 }
 
 /**
- * Executes level 2 of the game.
+ * @brief Executes level 2 of the game.
  * The player is presented with a series of Morse code challenges and must input the correct answers.
  * The level continues until the player runs out of lives or answers 5 questions correctly in a row.
  * At the end of the level, the outcome (win or lose) is displayed.
@@ -389,7 +446,7 @@ void level_2()
 }
 
 /**
- * Executes level 3 of the game.
+ * @brief Executes level 3 of the game.
  * The player is presented with a series of words (along woth morse values) as Morse code challenges and must input the correct answers.
  * The level continues until the player runs out of lives or answers 5 questions correctly in a row.
  * At the end of the level, the outcome (win or lose) is displayed.
@@ -454,7 +511,7 @@ void level_3()
 }
 
 /**
- * Executes level 4 of the game.
+ * @brief Executes level 4 of the game.
  * The player is presented with a series of words as Morse code challenges and must input the correct answers.
  * The level continues until the player runs out of lives or answers 5 questions correctly in a row.
  * At the end of the level, the outcome (win or lose) is displayed.
@@ -584,7 +641,7 @@ void add_input(int input_type)
 // -------------------------------------- Display Message --------------------------------------
 
 /**
- * Displays a welcome message and instructions for the Morse code game.
+ * @brief Displays a welcome message and instructions for the Morse code game.
  */
 void welcome()
 {
@@ -604,7 +661,7 @@ void welcome()
 }
 
 /**
- * Displays instructions on how to play the Morse code game.
+ * @brief Displays instructions on how to play the Morse code game.
  */
 void instructions()
 {
@@ -621,7 +678,7 @@ void instructions()
 }
 
 /**
- * Displays the difficulty level inputs for the Morse code game.
+ * @brief Displays the difficulty level inputs for the Morse code game.
  */
 void difficulty_level_inputs()
 {
@@ -640,7 +697,7 @@ void difficulty_level_inputs()
 // -------------------------------------- LED --------------------------------------
 
 /**
- * Sets the correct LED color based on the current level and number of lives.
+ * @brief Sets the correct LED color based on the current level and number of lives.
  * If the current level is not 0, the LED color is determined by the number of lives:
  * - 3 lives: Green
  * - 2 lives: Yellow
@@ -677,7 +734,7 @@ void set_correct_led()
 }
 
 /**
- * Sets the LED color to Red.
+ * @brief Sets the LED color to Red.
  */
 void set_red_led()
 {
@@ -685,7 +742,7 @@ void set_red_led()
 }
 
 /**
- * Sets the LED color to Blue.
+ * @brief Sets the LED color to Blue.
  */
 void set_blue_led()
 {
@@ -1050,7 +1107,7 @@ void calculate_stats(int reset)
 }
 
 /**
- * Function to handle game completion.
+ * @brief Function to handle game completion.
  * Calculates game statistics, displays game over message, and prompts for replay or exit.
  */
 void game_finished()
@@ -1063,7 +1120,6 @@ void game_finished()
     printf("\t* Enter .---- to play again *\n");
     printf("\t* Enter ..--- to exit       *\n");
     printf("\t*****************************\n\n\n");
-    // main_asm();
     clear_input();
     while (input_complete == 0)
     {
