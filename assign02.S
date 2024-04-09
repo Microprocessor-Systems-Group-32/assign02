@@ -15,7 +15,7 @@
 .equ    DFLT_ALARM_RUN, 0                               @ Specify the default alarm run state
 .equ    DFLT_ALARM_TIME, 2000000                        @ Specify the default alarm timeout
 
-.equ    LONG_PRESS, 2500000                             @ Specify the long press time
+.equ    LONG_PRESS, 250000                             @ Specify the long press time
 .equ    LONG_PRESS_SPACE, 1000000                       @ Specify the long press space time
 
 .equ    GPIO_BTN_MSK_RISE, 0x00800000                   @ Bit-21 for falling-edge event on GP21
