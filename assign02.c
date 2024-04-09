@@ -400,18 +400,37 @@ void level_2()
 
 void level_3()
 {
-    printf("-----------\n");
-    printf("| Level 3 |\n");
-    printf("| Please enter a space between each letter of the word |\n");
-    printf("-----------\n\n");
+    printf("---------------------------------------------------------\n");
+    printf("|                        Level 3                        |\n");
+    printf("| Please enter a space between each letter of the word  |\n");
+    printf("|    Wait for one second after inputting for a space    |\n");
+    printf("---------------------------------------------------------\n\n");
 
     while (remaining > 0 && lives > 0)
     {
         srand(time(NULL));
         char_to_solve = select_random(0, 24);
-        printf("-----------------------------------------\n");
-        printf("|\tEnter %s = %s in Morse Code\t|\n", wTable[char_to_solve].word, wTable[char_to_solve].code);
-        printf("-----------------------------------------\n");
+        if(strlen(wTable[char_to_solve].word) < 4){
+            printf("-------------------------------------------------\n");
+            printf("|\tEnter %s = %s in Morse Code\t|\n", wTable[char_to_solve].word, wTable[char_to_solve].code);
+            printf("-------------------------------------------------\n");
+        }
+        else if(strlen(wTable[char_to_solve].word) < 6){
+            printf("---------------------------------------------------------\n");
+            printf("|\tEnter %s = %s in Morse Code\t|\n", wTable[char_to_solve].word, wTable[char_to_solve].code);
+            printf("---------------------------------------------------------\n");
+        } 
+        else if(strlen(wTable[char_to_solve].word) < 8){
+            printf("-----------------------------------------------------------------\n");
+            printf("|\tEnter %s = %s in Morse Code\t|\n", wTable[char_to_solve].word, wTable[char_to_solve].code);
+            printf("-----------------------------------------------------------------\n");
+        }
+        else{
+            printf("-------------------------------------------------------------------------\n");
+            printf("|\tEnter %s = %s in Morse Code\t|\n", wTable[char_to_solve].word, wTable[char_to_solve].code);
+            printf("-------------------------------------------------------------------------\n");
+        }
+        
         while (input_complete == 0)
         {
             // Empty while to stall the game until the timer interrupt fires
@@ -446,18 +465,27 @@ void level_3()
 
 void level_4()
 {
-    printf("-----------\n");
-    printf("| Level 4 |\n");
-    printf("| Please enter a space between each letter of the word |\n");
-    printf("-----------\n\n");
+    printf("---------------------------------------------------------\n");
+    printf("|                        Level 4                        |\n");
+    printf("| Please enter a space between each letter of the word  |\n");
+    printf("|    Wait for one second after inputting for a space    |\n");
+    printf("---------------------------------------------------------\n\n");
 
     while (remaining > 0 && lives > 0)
     {
         srand(time(NULL));
         char_to_solve = select_random(0, 24);
-        printf("-----------------------------------------\n");
-        printf("|\tEnter %s in Morse Code\t|\n", wTable[char_to_solve].word);
-        printf("-----------------------------------------\n");
+        if(strlen(wTable[char_to_solve].word) < 4){
+            printf("---------------------------------\n");
+            printf("|\tEnter %s in Morse Code\t|\n", wTable[char_to_solve].word);
+            printf("---------------------------------\n");
+        }
+        else{
+            printf("-----------------------------------------\n");
+            printf("|\tEnter %s in Morse Code\t|\n", wTable[char_to_solve].word);
+            printf("-----------------------------------------\n");
+        }
+
         while (input_complete == 0)
         {
             // Empty while to stall the game until the timer interrupt fires
@@ -914,7 +942,7 @@ void calculate_stats(int reset)
     printf("\n*\tLives Left: \t\t\t%d\t*", lives);
     if (right_input != 0 || wrong_input != 0)
     {
-        float stat = right_input / (right_input + wrong_input) * 100;
+        float stat = (float)right_input / (right_input + wrong_input) * 100;
         if (reset)
         {
             right_input = 0;
