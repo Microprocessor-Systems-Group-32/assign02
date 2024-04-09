@@ -442,6 +442,7 @@ void level_2()
         printf("YOU WIN!!!\n");
         wins++;
     }
+    set_blue_led();
     game_finished();
 }
 
@@ -819,7 +820,6 @@ void check_input()
         // Level 1
         if (strcmp(current_input, table[char_to_solve].code) == 0)
         {
-            set_correct_led();
             remaining--;
             printf("\nCORRECT!\n\n");
             printf("Remaining: %d\n", remaining);
@@ -827,6 +827,7 @@ void check_input()
                 printf("Lives Incremented\n");
                 lives++;
             }
+            set_correct_led();
             printf("Lives: %d\n\n\n", lives);
             right_input++;
         }
@@ -859,7 +860,6 @@ void check_input()
         // Level 2
         if (strcmp(current_input, table[char_to_solve].code) == 0)
         {
-            set_correct_led();
             remaining--;
             printf("\nCORRECT!\n\n");
             printf("Remaining: %d\n", remaining);
@@ -867,6 +867,7 @@ void check_input()
                 printf("Lives Incremented\n");
                 lives++;
             }
+            set_correct_led();
             printf("Lives: %d\n\n\n", lives);
             right_input++;
         }
@@ -899,8 +900,7 @@ void check_input()
     {
         // Level 3
         if (strcmp(current_input, wTable[char_to_solve].code) == 0)
-        {
-            set_correct_led();
+        {  
             remaining--;
             printf("\nCORRECT!\n\n");
             printf("Remaining: %d\n", remaining);
@@ -908,6 +908,7 @@ void check_input()
                 printf("Lives Incremented\n");
                 lives++;
             }
+            set_correct_led();
             printf("Lives: %d\n\n\n", lives);
             right_input++;
         }
@@ -961,7 +962,6 @@ void check_input()
         // Level 4
         if (strcmp(current_input, wTable[char_to_solve].code) == 0)
         {
-            set_correct_led();
             remaining--;
             printf("\nCORRECT!\n\n");
             printf("Remaining: %d\n", remaining);
@@ -970,6 +970,7 @@ void check_input()
                 lives++;
             }
             printf("Lives: %d\n\n\n", lives);
+            set_correct_led();
             right_input++;
         }
         else
