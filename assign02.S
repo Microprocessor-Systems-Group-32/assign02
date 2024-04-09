@@ -13,9 +13,9 @@
 
 .equ    DFLT_TIME, 0x0                                  @ Specify the default time
 .equ    DFLT_ALARM_RUN, 0                               @ Specify the default alarm run state
-.equ    DFLT_ALARM_TIME, 2000000                        @ Specify the default alarm timeout
+.equ    DFLT_ALARM_TIME, 1000000                        @ Specify the default alarm timeout
 
-.equ    LONG_PRESS, 250000                             @ Specify the long press time
+.equ    LONG_PRESS, 250000                              @ Specify the long press time
 .equ    LONG_PRESS_SPACE, 1000000                       @ Specify the long press space time
 
 .equ    GPIO_BTN_MSK_RISE, 0x00800000                   @ Bit-21 for falling-edge event on GP21
@@ -80,6 +80,7 @@ set_alarm_timing:
     ldr     r5, [r5]                                    @ Load the timing delay
     add     r4, r4, r5                                  @ Add delays together
     ldr     r5, =(TIMER_BASE + TIMER_ALARM0_OFFSET)     @ Get ALARM0 control register    
+    @ ldr     r4, =DFLT_ALARM_TIME
     str     r4, [r5]                                    @ Store new delay
     ldr     r4, =0x1                                    @ Set appropriate value to enable timer (entry 0)
     ldr     r5, =(TIMER_BASE + TIMER_INTE_OFFSET)       @ Load INTE register address
