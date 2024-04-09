@@ -80,7 +80,6 @@ set_alarm_timing:
     ldr     r5, [r5]                                    @ Load the timing delay
     add     r4, r4, r5                                  @ Add delays together
     ldr     r5, =(TIMER_BASE + TIMER_ALARM0_OFFSET)     @ Get ALARM0 control register    
-    @ ldr     r4, =DFLT_ALARM_TIME
     str     r4, [r5]                                    @ Store new delay
     ldr     r4, =0x1                                    @ Set appropriate value to enable timer (entry 0)
     ldr     r5, =(TIMER_BASE + TIMER_INTE_OFFSET)       @ Load INTE register address
