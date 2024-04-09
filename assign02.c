@@ -214,7 +214,6 @@ void morse_init()
     table[35].code = "----.";
 }
 
-
 // -------------------------------------- Word Struct --------------------------------------
 
 /*
@@ -287,8 +286,6 @@ void word_morse_init()
     wTable[23].code = "... -.-- ... - . --";
     wTable[24].code = "--. .- -- .";
 }
-
-
 
 // -------------------------------------- Select Level --------------------------------------
 
@@ -476,16 +473,18 @@ void level_4()
     else
     {
         // Completed 5 corret questions
-        printf("YOU WIN!!!\n");
+        printf("  ____    _    __  __ _____    ____ ___  __  __ ____  _     _____ _____ _____ \n ");
+        printf("/ ___|  / \\  |  \\/  | ____|  / ___/ _ \\|  \\/  |  _ \\| |   | ____|_   _| ____|\n");
+        printf("| |  _  / _ \\ | |\\/| |  _|   | |  | | | | |\\/| | |_) | |   |  _|   | | |  _| \n");
+        printf("| |_| |/ ___ \\| |  | | |___  | |__| |_| | |  | |  __/| |___| |___  | | | |___ \n");
+        printf(" \\____/_/   \\_\\_|  |_|_____|  \\____\\___/|_|  |_|_|   |_____|_____| |_| |_____|\n\n");
         wins++;
     }
     set_blue_led();
     game_finished();
 }
 
-
 // -------------------------------------- Inputs --------------------------------------
-
 
 /**
  * @brief Adds an input character to the current input based on the input type.
@@ -496,7 +495,7 @@ void level_4()
  *                   2 - Space (only if current_level > 2)
  *                   3 - End Of Line (EOL)
  */
- 
+
 void add_input(int input_type)
 {
     if (current_input_length == 100)
@@ -535,15 +534,15 @@ void add_input(int input_type)
     case 3:
     {
         // End Of Line (EOL)
-        if((current_level==3)||(current_level==4))
+        if ((current_level == 3) || (current_level == 4))
         {
-            current_input[current_input_length-1] = '\0';
+            current_input[current_input_length - 1] = '\0';
         }
         else
         {
             current_input[current_input_length] = '\0';
         }
-        
+
         printf("\n");
         current_input_length++;
         input_complete = 1;
@@ -788,7 +787,6 @@ void check_input()
             printf("Remaining: %d\n", remaining);
             printf("Lives: %d\n\n\n", lives);
             right_input++;
-
         }
         else
         {
@@ -812,7 +810,6 @@ void check_input()
             printf("Remaining: %d\n", remaining);
             printf("Lives: %d\n\n\n", lives);
             right_input++;
-
         }
         else
         {
@@ -884,11 +881,11 @@ void start_game()
         else if (current_level == 3)
         {
             level_3();
-        } 
+        }
         else if (current_level == 4)
         {
             level_4();
-        } 
+        }
 
         reset_game();
         clear_input();
